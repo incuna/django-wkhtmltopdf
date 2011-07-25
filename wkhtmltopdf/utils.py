@@ -50,7 +50,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     stdoutdata, stderrdata = process.communicate()
 
     if process.returncode != 0:
-        raise CalledProcessError(returncode, args)
+        raise CalledProcessError(process.returncode, args)
     
     if output is None:
         output = stdoutdata
@@ -60,14 +60,16 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 def render_to_pdf(template_name, dictionary=None, context_instance=None, header_template=None, footer_template=None, **kwargs):
     """Renders a html template as a PDF response."""
 
+    filename = kwargs.pop('filename', None)
+
     page_path = template_to_temp_file(template_name, dictionary, context_instance)
 
     tmp_files = []
     if header_template is not None:
-        kwargs['header_html'] = render_to_temp_file(header_template, dictionary, context_instance)
+        kwargs['header_html'] = template_to_temp_file(header_template, dictionary, context_instance)
         tmp_files.append(kwargs['header_html'])
     if footer_template is not None:
-        kwargs['footer_html'] = render_to_temp_file(footer_template, dictionary, context_instance)
+        kwargs['footer_html'] = template_to_temp_file(footer_template, dictionary, context_instance)
         tmp_files.append(kwargs['footer_html'])
 
     content = wkhtmltopdf([page_path], **kwargs)
@@ -75,7 +77,11 @@ def render_to_pdf(template_name, dictionary=None, context_instance=None, header_
     for path in tmp_files:
         remove(path)
 
-    return HttpResponse(content, mimetype='application/pdf')
+    response = HttpResponse(content, mimetype='application/pdf')
+    if filename is not None:
+        response['Content-Disposition'] = 'attachment;' + ' filename=%s' %filename
+    return response
+
 
 def template_to_temp_file(*args, **kwargs):
     """Renders a template to a temp file, and returns the path of the file."""
