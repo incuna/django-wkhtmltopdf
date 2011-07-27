@@ -1,7 +1,8 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
+
 setup(
-    name = "wkhtmltopdf",
-    packages = ["wkhtmltopdf", ],
+    name = "django-wkhtmltopdf",
+    packages = find_packages(),
     include_package_data=True,
     #install_requires=[],
     version = "0.1",
