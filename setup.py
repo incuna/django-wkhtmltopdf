@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+from wkhtmltopdf import get_version
 setup(
     name = "django-wkhtmltopdf",
     packages = find_packages(),
