@@ -83,7 +83,6 @@ def render_to_pdf(template_name, dictionary=None, context_instance=None, header_
         response['Content-Disposition'] = 'attachment;' + ' filename=%s' %filename
     return response
 
-import codecs
 
 def template_to_temp_file(*args, **kwargs):
     """Renders a template to a temp file, and returns the path of the file."""
