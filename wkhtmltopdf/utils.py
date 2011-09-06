@@ -5,6 +5,7 @@ from tempfile import mkstemp
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
+from django.utils.encoding import smart_str
 
 WKHTMLTOPDF_CMD = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
 
@@ -82,12 +83,13 @@ def render_to_pdf(template_name, dictionary=None, context_instance=None, header_
         response['Content-Disposition'] = 'attachment;' + ' filename=%s' %filename
     return response
 
+import codecs
 
 def template_to_temp_file(*args, **kwargs):
     """Renders a template to a temp file, and returns the path of the file."""
     fd, tmppath = mkstemp(suffix='.html')
     f = fdopen(fd, 'wt')
-    f.write(loader.render_to_string(*args, **kwargs))
+    f.write(smart_str(loader.render_to_string(*args, **kwargs)))
     f.close()
     return tmppath
 
