@@ -1,9 +1,8 @@
-from os import fdopen, remove
+from os import fdopen
 from subprocess import Popen, PIPE, CalledProcessError
 from tempfile import mkstemp
 
 from django.conf import settings
-from django.http import HttpResponse
 from django.template import loader
 from django.utils.encoding import smart_str
 
@@ -58,33 +57,6 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     return output
 
-def render_to_pdf(template_name, dictionary=None, context_instance=None,
-                    header_template=None, footer_template=None, **kwargs):
-    """Renders a html template as a PDF response."""
-
-    filename = kwargs.pop('filename', None)
-
-    page_path = template_to_temp_file(template_name, dictionary, context_instance)
-
-    tmp_files = []
-    if header_template is not None:
-        kwargs['header_html'] = template_to_temp_file(header_template, dictionary, context_instance)
-        tmp_files.append(kwargs['header_html'])
-    if footer_template is not None:
-        kwargs['footer_html'] = template_to_temp_file(footer_template, dictionary, context_instance)
-        tmp_files.append(kwargs['footer_html'])
-
-    content = wkhtmltopdf([page_path], **kwargs)
-
-    for path in tmp_files:
-        remove(path)
-
-    response = HttpResponse(content, mimetype='application/pdf')
-    if filename is not None:
-        response['Content-Disposition'] = 'attachment;' + ' filename=%s' %filename
-    return response
-
-
 def template_to_temp_file(*args, **kwargs):
     """
     Renders a template to a temp file, and returns the path of the file.
@@ -93,5 +65,4 @@ def template_to_temp_file(*args, **kwargs):
     with fdopen(file_descriptor, 'wt') as f:
         f.write(smart_str(loader.render_to_string(*args, **kwargs)))
     return tempfile_path
-
 
