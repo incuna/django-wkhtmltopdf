@@ -85,11 +85,12 @@ def render_to_pdf(template_name, dictionary=None, context_instance=None, header_
 
 
 def template_to_temp_file(*args, **kwargs):
-    """Renders a template to a temp file, and returns the path of the file."""
-    fd, tmppath = mkstemp(suffix='.html')
-    f = fdopen(fd, 'wt')
-    f.write(smart_str(loader.render_to_string(*args, **kwargs)))
-    f.close()
-    return tmppath
+    """
+    Renders a template to a temp file, and returns the path of the file.
+    """
+    file_descriptor, tempfile_path = mkstemp(suffix='.html')
+    with fdopen(file_descriptor, 'wt') as f:
+        f.write(smart_str(loader.render_to_string(*args, **kwargs)))
+    return tempfile_path
 
 
