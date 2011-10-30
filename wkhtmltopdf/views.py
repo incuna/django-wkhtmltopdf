@@ -54,7 +54,7 @@ class PdfTemplateView(TemplateView):
         match_full_url = compile(r'^https?://')
         if not match_full_url.match(settings.STATIC_URL):
             context['STATIC_URL'] = 'http://' + Site.objects.get_current().domain + settings.STATIC_URL
-        if not match_full_url.match(settings.STATIC_URL):
+        if not match_full_url.match(settings.MEDIA_URL):
             context['MEDIA_URL'] = 'http://' + Site.objects.get_current().domain + settings.MEDIA_URL
 
         return context
