@@ -14,7 +14,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     Converts html to PDF using http://code.google.com/p/wkhtmltopdf/.
 
     pages: List of file paths or URLs of the html to be converted.
-    output: Optionsal output file path.
+    output: Optional output file path.
     **kwargs: Passed to wkhtmltopdf via _extra_args() (See
               https://github.com/antialize/wkhtmltopdf/blob/master/README_WKHTMLTOPDF
               for acceptable args.)
@@ -52,13 +52,14 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     if process.returncode != 0:
         raise CalledProcessError(process.returncode, args)
-    
+
     if output is None:
         output = stdoutdata
 
     return output
 
-def render_to_pdf(template_name, dictionary=None, context_instance=None, header_template=None, footer_template=None, **kwargs):
+def render_to_pdf(template_name, dictionary=None, context_instance=None,
+                    header_template=None, footer_template=None, **kwargs):
     """Renders a html template as a PDF response."""
 
     filename = kwargs.pop('filename', None)
