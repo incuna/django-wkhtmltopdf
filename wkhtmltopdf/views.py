@@ -34,7 +34,7 @@ class PDFTemplateView(TemplateView):
 
     def get(self, request, context_instance=None, *args, **kwargs):
         if request.GET.get('as', '') == 'html':
-            super(PdfTemplateView, self).get(request, *args, **kwargs)
+            return super(PdfTemplateView, self).get(request, *args, **kwargs)
 
         page_path = template_to_temp_file(self.template_name, self.get_context_data(), context_instance)
 
