@@ -42,7 +42,10 @@ class PDFTemplateView(TemplateView):
         page_path = template_to_temp_file(self.template_name, self.get_context_data(), self.context_instance)
 
         pdf_kwargs = self.get_pdf_kwargs()
-        return self.response(wkhtmltopdf(page_path, **pdf_kwargs), self.filename)
+        return self.response(wkhtmltopdf(page_path, **pdf_kwargs), self.get_filename())
+
+    def get_filename(self):
+        return self.filename
 
     def get_pdf_kwargs(self):
         kwargs = {
