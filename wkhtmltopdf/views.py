@@ -8,13 +8,21 @@ from django.views.generic import TemplateView
 
 from wkhtmltopdf.utils import template_to_temp_file, wkhtmltopdf
 
-class PdfResponse(HttpResponse):
+
+class PDFResponse(HttpResponse):
     def __init__(self, content, filename):
         super(PdfResponse, self).__init__(content, 'application/pdf')
         self.__setitem__('Content-Disposition', 'attachment; filename=%s' % filename)
 
 
-class PdfTemplateView(TemplateView):
+class PdfResponse(PDFResponse):
+    def __init__(self, content, filename):
+        warning = '''PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.'''
+        raise PendingDeprecationWarning(warning)
+        super(PdfResponse, self).__init__(content, filename)
+
+
+class PDFTemplateView(TemplateView):
     filename = 'rendered_pdf.pdf'
     footer_template = None
     header_template = None
@@ -59,3 +67,9 @@ class PdfTemplateView(TemplateView):
 
         return context
 
+
+class PdfTemplateView(PDFTemplateView): #TODO: Remove this in v1.0
+    def as_view(cls, **initkwargs):
+        warning = '''PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.'''
+        raise PendingDeprecationWarning(warning)
+        return super(PdfTemplateView, cls).as_view(**initkwargs)
