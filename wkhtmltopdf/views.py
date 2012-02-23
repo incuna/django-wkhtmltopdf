@@ -30,7 +30,7 @@ class PDFTemplateView(TemplateView):
     margin_left = 0
     margin_right = 0
     margin_top = 0
-    response = PdfResponse
+    response = PDFResponse
 
     def get(self, request, context_instance=None, *args, **kwargs):
         if request.GET.get('as', '') == 'html':
