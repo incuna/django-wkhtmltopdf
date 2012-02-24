@@ -28,4 +28,5 @@ If you can't add wkhtmltopdf to your `PATH`, you can set `WKHTMLTOPDF_CMD` to a
 specific execuatable:
 
 e.g.: in `settings.py`
+
     WKHTMLTOPDF_CMD = '/path/to/my/wkhtmltopdf'
