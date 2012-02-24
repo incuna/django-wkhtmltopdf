@@ -2,8 +2,8 @@ Changelog for django-wkhtmltopdf
 ================================
 
 
-Current Development
--------------------
+0.2
+---
 
 * Added option for orientation. Defaults to 'portrait', can be 'landscape'.
 * Deprecated PdfTemplateView in preference of PDFTemplateView.
