@@ -33,15 +33,13 @@ class PDFTemplateView(TemplateView):
     margin_top = 0
     response = PDFResponse
 
-    def get(self, request, context_instance=None, **kwargs):
+    def get(self, request, context_instance=None, *args, **kwargs):
         if request.GET.get('as', '') == 'html':
-            return super(PDFTemplateView, self).get(request, **kwargs)
+            return super(PDFTemplateView, self).get(request, *args, **kwargs)
 
-        # Save arguments onto class (would have been done in super-class)
         self.context_instance = context_instance
 
         page_path = template_to_temp_file(self.template_name, self.get_context_data(), self.context_instance)
-
         pdf_kwargs = self.get_pdf_kwargs()
         return self.response(wkhtmltopdf(page_path, **pdf_kwargs), self.get_filename())
 
