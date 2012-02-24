@@ -11,13 +11,13 @@ from wkhtmltopdf.utils import template_to_temp_file, wkhtmltopdf
 
 class PDFResponse(HttpResponse):
     def __init__(self, content, filename):
-        super(PdfResponse, self).__init__(content, 'application/pdf')
+        super(PDFResponse, self).__init__(content, 'application/pdf')
         self.__setitem__('Content-Disposition', 'attachment; filename=%s' % filename)
 
 
 class PdfResponse(PDFResponse):
     def __init__(self, content, filename):
-        warning = '''PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.'''
+        warning = '''PdfResponse is deprecated in favour of PDFResponse. It will be removed in version 1.'''
         raise PendingDeprecationWarning(warning)
         super(PdfResponse, self).__init__(content, filename)
 
@@ -33,10 +33,11 @@ class PDFTemplateView(TemplateView):
     margin_top = 0
     response = PDFResponse
 
-    def get(self, request, context_instance=None, *args, **kwargs):
+    def get(self, request, context_instance=None, **kwargs):
         if request.GET.get('as', '') == 'html':
-            return super(PdfTemplateView, self).get(request, *args, **kwargs)
+            return super(PDFTemplateView, self).get(request, **kwargs)
 
+        # Save arguments onto class (would have been done in super-class)
         self.context_instance = context_instance
 
         page_path = template_to_temp_file(self.template_name, self.get_context_data(), self.context_instance)
@@ -53,7 +54,7 @@ class PDFTemplateView(TemplateView):
             'margin_left': self.margin_left,
             'margin_right': self.margin_right,
             'margin_top': self.margin_top,
-            'orientation': self.self.orientation,
+            'orientation': self.orientation,
         }
         tmp_files = []
         if self.header_template:
@@ -66,7 +67,7 @@ class PDFTemplateView(TemplateView):
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context = super(PdfTemplateView, self).get_context_data(**kwargs)
+        context = super(PDFTemplateView, self).get_context_data(**kwargs)
 
         match_full_url = compile(r'^https?://')
         if not match_full_url.match(settings.STATIC_URL):
