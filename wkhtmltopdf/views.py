@@ -39,7 +39,7 @@ class PDFTemplateView(TemplateView):
 
         self.context_instance = context_instance
 
-        page_path = template_to_temp_file(self.template_name, self.get_context_data(), self.context_instance)
+        page_path = template_to_temp_file(self.get_template_names(), self.get_context_data(), self.context_instance)
         pdf_kwargs = self.get_pdf_kwargs()
         return self.response(wkhtmltopdf(page_path, **pdf_kwargs), self.get_filename())
 
