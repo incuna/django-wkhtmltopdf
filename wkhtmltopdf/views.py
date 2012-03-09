@@ -3,6 +3,7 @@ from re import compile
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.template.context import RequestContext
 from django.template.response import HttpResponse
 from django.views.generic import TemplateView
 
@@ -37,7 +38,10 @@ class PDFTemplateView(TemplateView):
         if request.GET.get('as', '') == 'html':
             return super(PDFTemplateView, self).get(request, *args, **kwargs)
 
-        self.context_instance = context_instance
+        if context_instance:
+            self.context_instance = context_instance
+        else:
+            self.context_instance = RequestContext(request, self.get_context_data(**kwargs))
 
         page_path = template_to_temp_file(self.get_template_names(), self.get_context_data(), self.context_instance)
         pdf_kwargs = self.get_pdf_kwargs()
