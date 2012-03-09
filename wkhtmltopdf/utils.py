@@ -57,12 +57,12 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     return output
 
-def template_to_temp_file(*args, **kwargs):
+def template_to_temp_file(template_name, dictionary=None, context_instance=None):
     """
     Renders a template to a temp file, and returns the path of the file.
     """
     file_descriptor, tempfile_path = mkstemp(suffix='.html')
     with fdopen(file_descriptor, 'wt') as f:
-        f.write(smart_str(loader.render_to_string(*args, **kwargs)))
+        f.write(smart_str(loader.render_to_string(template_name, dictionary=dictionary, context_instance=context_instance)))
     return tempfile_path
 
