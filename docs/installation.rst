@@ -46,6 +46,7 @@ This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``)
     silently. `This page`_ details ways to get around this but the easiest
     way to fix the issue is to install the 32bit binary.
 
+.. _this page: http://code.google.com/p/wkhtmltopdf/wiki/static
 
 Django
 ======
