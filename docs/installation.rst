@@ -1,7 +1,10 @@
+Installation
+============
+
 Package
-=======
+-------
 PyPI
-----
+~~~~
 
 .. code-block:: bash
 
@@ -9,7 +12,7 @@ PyPI
 
 
 GitHub
-------
+~~~~~~
 
 .. code-block:: bash
 
@@ -19,7 +22,7 @@ GitHub
 
 
 Binary
-======
+------
 
 Find the relevant download link on the ``wkhtmltopdf`` project `downloads page`_.
 
@@ -49,7 +52,7 @@ This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``)
 .. _this page: http://code.google.com/p/wkhtmltopdf/wiki/static
 
 Django
-======
+------
 
 Add ``wkhtmltopdf`` to your ``INSTALLED_APPS``:
 
