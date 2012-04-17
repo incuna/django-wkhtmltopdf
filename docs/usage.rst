@@ -29,7 +29,7 @@ Point a URL at PDFTemplateView:
 .. code-block:: python
 
     from django.conf.urls.defaults import *
-    from django_wkhtmltopdf.views import PDFTemplateView
+    from wkhtmltopdf.views import PDFTemplateView
 
 
     urlpatterns = patterns('',
