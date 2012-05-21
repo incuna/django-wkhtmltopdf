@@ -16,6 +16,8 @@ This requires libfontconfig (on Ububtu: ``sudo aptitude install libfontconfig``)
 
 .. _wkhtmltopdf: http://code.google.com/p/wkhtmltopdf/downloads/list
 
+Python 2.6
+
 
 Installation
 ------------
