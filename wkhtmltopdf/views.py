@@ -1,4 +1,4 @@
-from os import remove
+import os
 from re import compile
 
 from django.conf import settings
@@ -33,6 +33,11 @@ class PDFTemplateView(TemplateView):
     margin_right = 0
     margin_top = 0
     response = PDFResponse
+    _tmp_files = None
+
+    def __init__(self, *args, **kwargs):
+        self._tmp_files = []
+        super(PDFTemplateView, self).__init__(*args, **kwargs)
 
     def get(self, request, context_instance=None, *args, **kwargs):
         if request.GET.get('as', '') == 'html':
@@ -45,7 +50,10 @@ class PDFTemplateView(TemplateView):
 
         page_path = template_to_temp_file(self.get_template_names(), self.get_context_data(), self.context_instance)
         pdf_kwargs = self.get_pdf_kwargs()
-        return self.response(wkhtmltopdf(page_path, **pdf_kwargs), self.get_filename())
+        output = wkhtmltopdf(page_path, **pdf_kwargs)
+        if self._tmp_files:
+            map(os.remove, self._tmp_files)
+        return self.response(output, self.get_filename())
 
     def get_filename(self):
         return self.filename
@@ -58,14 +66,12 @@ class PDFTemplateView(TemplateView):
             'margin_top': self.margin_top,
             'orientation': self.orientation,
         }
-        tmp_files = []
         if self.header_template:
             kwargs['header_html'] = template_to_temp_file(self.header_template, self.get_context_data(), self.context_instance)
-            tmp_files.append(kwargs['header_html'])
+            self._tmp_files.append(kwargs['header_html'])
         if self.footer_template:
             kwargs['footer_html'] = template_to_temp_file(self.footer_template, self.get_context_data(), self.context_instance)
-            tmp_files.append(kwargs['footer_html'])
-        map(remove, tmp_files)
+            self._tmp_files.append(kwargs['footer_html'])
         return kwargs
 
     def get_context_data(self, **kwargs):
