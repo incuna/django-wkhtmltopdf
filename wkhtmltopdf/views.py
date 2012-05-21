@@ -11,10 +11,11 @@ from wkhtmltopdf.utils import template_to_temp_file, wkhtmltopdf
 
 
 class PDFResponse(HttpResponse):
-    def __init__(self, content, **kwargs):
-        super(PDFResponse, self).__init__(content, 'application/pdf')
-        if 'filename' in kwargs:
-            header_content = 'attachment; filename={0}'.format(kwargs.get('filename'))
+    def __init__(self, content, *args, **kwargs):
+        filename = kwargs.pop('filename', None)
+        super(PDFResponse, self).__init__(content, 'application/pdf', *args, **kwargs)
+        if filename:
+            header_content = 'attachment; filename={0}'.format(filename)
             self.__setitem__('Content-Disposition', header_content)
 
 
@@ -55,7 +56,7 @@ class PDFTemplateView(TemplateView):
         output = wkhtmltopdf(page_path, **pdf_kwargs)
         if self._tmp_files:
             map(os.remove, self._tmp_files)
-        return self.response(output, self.get_filename())
+        return self.response(output, filename=self.get_filename())
 
     def get_filename(self):
         return self.filename
