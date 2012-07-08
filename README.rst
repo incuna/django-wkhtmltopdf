@@ -12,7 +12,7 @@ Requirements
 ------------
 
 Install the `wkhtmltopdf`_ binary.
-This requires libfontconfig (on Ububtu: ``sudo aptitude install libfontconfig``).
+This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``).
 
 .. _wkhtmltopdf: http://code.google.com/p/wkhtmltopdf/downloads/list
 
@@ -31,6 +31,6 @@ By default it will execute the first wkhtmltopdf command found on your ``PATH``.
 If you can't add wkhtmltopdf to your ``PATH``, you can set ``WKHTMLTOPDF_CMD`` to a
 specific execuatable:
 
-e.g.: in ``settings.py``
+e.g.: in ``settings.py``::
 
     WKHTMLTOPDF_CMD = '/path/to/my/wkhtmltopdf'
