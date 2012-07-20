@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from copy import copy
 from itertools import chain
 from os import fdopen
 import sys
@@ -56,9 +57,11 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         output = '-'
 
     # Default options:
-    options = {
-        'quiet': True,
-    }
+    options = getattr(settings, 'WKHTMLTOPDF_CMD_OPTIONS', None)
+    if options is None:
+        options = {'quiet': True}
+    else:
+        options = copy(options)
     options.update(kwargs)
 
     cmd = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
