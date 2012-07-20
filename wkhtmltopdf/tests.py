@@ -5,11 +5,13 @@ from __future__ import absolute_import
 from StringIO import StringIO
 import os
 import sys
+import warnings
 
 from django.test import TestCase
 
 from .subprocess import CalledProcessError
 from .utils import _options_to_args, template_to_temp_file, wkhtmltopdf
+from .views import PdfResponse, PdfTemplateView
 
 
 class TestUtils(TestCase):
@@ -65,3 +67,23 @@ class TestUtils(TestCase):
         finally:
             if os.path.exists(temp_file):
                 os.remove(temp_file)
+
+
+class TestViews(TestCase):
+    def test_deprecated(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            PdfTemplateView()
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[0].category, PendingDeprecationWarning)
+            self.assertTrue(
+                'PDFTemplateView' in str(w[0].message),
+                "'PDFTemplateView' not in {!r}".format(w[0].message))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            PdfResponse(None, None)
+            self.assertEqual(len(w), 1)
+            self.assertEqual(w[0].category, PendingDeprecationWarning)
+            self.assertTrue(
+                'PDFResponse' in str(w[0].message),
+                "'PDFResponse' not in {!r}".format(w[0].message))

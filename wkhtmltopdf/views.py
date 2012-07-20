@@ -1,5 +1,6 @@
 import os
 from re import compile
+import warnings
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -21,8 +22,8 @@ class PDFResponse(HttpResponse):
 
 class PdfResponse(PDFResponse):
     def __init__(self, content, filename):
-        warning = '''PdfResponse is deprecated in favour of PDFResponse. It will be removed in version 1.'''
-        raise PendingDeprecationWarning(warning)
+        warnings.warn('PdfResponse is deprecated in favour of PDFResponse. It will be removed in version 1.',
+                      PendingDeprecationWarning, 2)
         super(PdfResponse, self).__init__(content, filename)
 
 
@@ -90,7 +91,7 @@ class PDFTemplateView(TemplateView):
 
 
 class PdfTemplateView(PDFTemplateView): #TODO: Remove this in v1.0
-    def as_view(cls, **initkwargs):
-        warning = '''PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.'''
-        raise PendingDeprecationWarning(warning)
-        return super(PdfTemplateView, cls).as_view(**initkwargs)
+    def __init__(self, *args, **kwargs):
+        warnings.warn('PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.',
+                      PendingDeprecationWarning, 2)
+        super(PdfTemplateView, self).__init__(*args, **kwargs)
