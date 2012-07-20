@@ -1,10 +1,13 @@
+from __future__ import absolute_import
+
 from os import fdopen
-from subprocess import Popen, PIPE, CalledProcessError
 from tempfile import mkstemp
 
 from django.conf import settings
 from django.template import loader
 from django.utils.encoding import smart_str
+
+from .subprocess import check_output
 
 WKHTMLTOPDF_CMD = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
 
@@ -45,17 +48,8 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     kwargs['quiet'] = ''
     args = '%s %s %s %s' % (WKHTMLTOPDF_CMD, _extra_args(**kwargs), ' '.join(pages), output or '-')
+    return check_output(args, shell=True)
 
-    process = Popen(args, stdout=PIPE, shell=True)
-    stdoutdata, stderrdata = process.communicate()
-
-    if process.returncode != 0:
-        raise CalledProcessError(process.returncode, args)
-
-    if output is None:
-        output = stdoutdata
-
-    return output
 
 def template_to_temp_file(template_name, dictionary=None, context_instance=None):
     """
