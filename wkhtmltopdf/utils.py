@@ -11,8 +11,6 @@ from django.utils.encoding import smart_str
 
 from .subprocess import check_output
 
-WKHTMLTOPDF_CMD = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
-
 
 def _options_to_args(**options):
     """Converts ``options`` into a string of command-line arguments."""
@@ -63,7 +61,8 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     }
     options.update(kwargs)
 
-    args = list(chain([WKHTMLTOPDF_CMD],
+    cmd = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
+    args = list(chain([cmd],
                       _options_to_args(**options),
                       list(pages),
                       [output]))
