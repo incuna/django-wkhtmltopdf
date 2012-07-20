@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-from StringIO import StringIO
 import os
 import sys
 import warnings
