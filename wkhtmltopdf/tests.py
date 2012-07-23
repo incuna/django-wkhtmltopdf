@@ -10,7 +10,7 @@ from django.test import TestCase
 
 from .subprocess import CalledProcessError
 from .utils import _options_to_args, template_to_temp_file, wkhtmltopdf
-from .views import PdfResponse, PdfTemplateView
+from .views import PDFResponse, PdfResponse, PdfTemplateView
 
 
 class TestUtils(TestCase):
@@ -69,7 +69,47 @@ class TestUtils(TestCase):
 
 
 class TestViews(TestCase):
+    def test_pdf_response(self):
+        """Should generate the correct HttpResonse object and mimetype"""
+        # 404
+        response = PDFResponse(content='', status=404)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.content, '')
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertFalse(response.has_header('Content-Disposition'))
+
+        content = '%PDF-1.4\n%%EOF'
+        # Without filename
+        response = PDFResponse(content=content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, content)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertFalse(response.has_header('Content-Disposition'))
+
+        # With filename
+        response = PDFResponse(content=content, filename="nospace.pdf")
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="nospace.pdf"')
+        response = PDFResponse(content=content, filename="one space.pdf")
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="one space.pdf"')
+        response = PDFResponse(content=content, filename="4'5\".pdf")
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="4\'5.pdf"')
+        response = PDFResponse(content=content, filename=u"♥.pdf")
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="?.pdf"')
+
+        # Content-Type
+        response = PDFResponse(content=content,
+                               content_type='application/x-pdf')
+        self.assertEqual(response['Content-Type'], 'application/x-pdf')
+        response = PDFResponse(content=content,
+                               mimetype='application/x-pdf')
+        self.assertEqual(response['Content-Type'], 'application/x-pdf')
+
     def test_deprecated(self):
+        """Should warn when using deprecated views."""
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             PdfTemplateView()

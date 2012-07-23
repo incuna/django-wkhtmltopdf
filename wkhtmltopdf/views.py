@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import os
 from re import compile
 import warnings
@@ -8,23 +10,27 @@ from django.template.context import RequestContext
 from django.template.response import HttpResponse
 from django.views.generic import TemplateView
 
-from wkhtmltopdf.utils import template_to_temp_file, wkhtmltopdf
+from .utils import (content_disposition_filename,
+                    template_to_temp_file, wkhtmltopdf)
 
 
 class PDFResponse(HttpResponse):
-    def __init__(self, content, *args, **kwargs):
+    def __init__(self, content, mimetype=None, status=200,
+                 content_type='application/pdf', *args, **kwargs):
         filename = kwargs.pop('filename', None)
-        super(PDFResponse, self).__init__(content, 'application/pdf', *args, **kwargs)
+        super(PDFResponse, self).__init__(content, mimetype, status,
+                                          content_type, *args, **kwargs)
         if filename:
+            filename = content_disposition_filename(filename)
             header_content = 'attachment; filename={0}'.format(filename)
-            self.__setitem__('Content-Disposition', header_content)
+            self['Content-Disposition'] = header_content
 
 
 class PdfResponse(PDFResponse):
     def __init__(self, content, filename):
         warnings.warn('PdfResponse is deprecated in favour of PDFResponse. It will be removed in version 1.',
                       PendingDeprecationWarning, 2)
-        super(PdfResponse, self).__init__(content, filename)
+        super(PdfResponse, self).__init__(content, filename=filename)
 
 
 class PDFTemplateView(TemplateView):

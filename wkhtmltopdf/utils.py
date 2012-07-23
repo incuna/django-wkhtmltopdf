@@ -81,3 +81,33 @@ def template_to_temp_file(template_name, dictionary=None, context_instance=None)
         f.write(smart_str(loader.render_to_string(template_name, dictionary=dictionary, context_instance=context_instance)))
     return tempfile_path
 
+
+def content_disposition_filename(filename):
+    """
+    Sanitize a file name to be used in the Content-Disposition HTTP
+    header.
+
+    Even if the standard is quite permissive in terms of
+    characters, there are a lot of edge cases that are not supported by
+    different browsers.
+
+    See http://greenbytes.de/tech/tc2231/#attmultinstances for more details.
+    """
+    filename = filename.replace(';', '').replace('"', '')
+    return http_quote(filename)
+
+
+def http_quote(string):
+    """
+    Given a unicode string, will do its dandiest to give you back a
+    valid ascii charset string you can use in, say, http headers and the
+    like.
+    """
+    if isinstance(string, unicode):
+        try:
+            import unidecode
+            string = unidecode.unidecode(string)
+        except ImportError:
+            string = string.encode('ascii', 'replace')
+    # Wrap in double-quotes for ; , and the like
+    return '"{!s}"'.format(string.replace('\\', '\\\\').replace('"', '\\"'))
