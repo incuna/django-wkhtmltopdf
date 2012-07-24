@@ -201,7 +201,10 @@ class PDFTemplateView(TemplateView):
             if cmd_options is None:
                 cmd_options = self.get_cmd_options()
             return super(PDFTemplateView, self).render_to_response(
-                context=context, filename=filename, cmd_options=cmd_options,
+                context=context, filename=filename,
+                header_template=self.header_template,
+                footer_template=self.footer_template,
+                cmd_options=cmd_options,
                 **response_kwargs
             )
         else:
