@@ -7,10 +7,13 @@ import sys
 import warnings
 
 from django.test import TestCase
+from django.test.client import RequestFactory
 
 from .subprocess import CalledProcessError
-from .utils import _options_to_args, template_to_temp_file, wkhtmltopdf
-from .views import PDFResponse, PdfResponse, PdfTemplateView
+from .utils import (override_settings,
+                    _options_to_args, template_to_temp_file, wkhtmltopdf)
+from .views import (PDFResponse, PdfResponse, PDFTemplateResponse,
+                    PDFTemplateView, PdfTemplateView)
 
 
 class TestUtils(TestCase):
@@ -70,7 +73,7 @@ class TestUtils(TestCase):
 
 class TestViews(TestCase):
     def test_pdf_response(self):
-        """Should generate the correct HttpResonse object and mimetype"""
+        """Should generate the correct HttpResponse object and mimetype"""
         # 404
         response = PDFResponse(content='', status=404)
         self.assertEqual(response.status_code, 404)
@@ -107,6 +110,113 @@ class TestViews(TestCase):
         response = PDFResponse(content=content,
                                mimetype='application/x-pdf')
         self.assertEqual(response['Content-Type'], 'application/x-pdf')
+
+    def test_pdf_template_response(self):
+        """Test PDFTemplateResponse."""
+        from django.conf import settings
+
+        with override_settings(
+            MEDIA_URL='/media/',
+            STATIC_URL='/static/',
+            TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
+            TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
+                                        'testproject', 'templates')],
+            WKHTMLTOPDF_DEBUG=False,
+        ):
+            # Setup sample.html
+            template = 'sample.html'
+            context = {'title': 'Heading'}
+            request = RequestFactory().get('/')
+            response = PDFTemplateResponse(request=request,
+                                           template=template,
+                                           context=context)
+            self.assertEqual(response._request, request)
+            self.assertEqual(response.template_name, template)
+            self.assertEqual(response.context_data, context)
+            self.assertEqual(response.filename, None)
+            self.assertEqual(response.header_template, None)
+            self.assertEqual(response.footer_template, None)
+            self.assertEqual(response.cmd_options, {})
+            self.assertFalse(response.has_header('Content-Disposition'))
+
+            # Render to temporary file
+            tempfile = response.render_to_temporary_file(template)
+            tempfile.seek(0)
+            html_content = tempfile.read()
+            self.assertTrue(html_content.startswith('<html>'))
+            self.assertTrue('<h1>{title}</h1>'.format(**context)
+                            in html_content)
+
+            pdf_content = response.rendered_content
+            self.assertTrue(pdf_content.startswith('%PDF-'))
+            self.assertTrue(pdf_content.endswith('%%EOF\n'))
+
+            # Header
+            filename = 'output.pdf'
+            footer_template = 'footer.html'
+            cmd_options = {'title': 'Test PDF'}
+            response = PDFTemplateResponse(request=request,
+                                           template=template,
+                                           context=context,
+                                           filename=filename,
+                                           footer_template=footer_template,
+                                           cmd_options=cmd_options)
+            self.assertEqual(response.filename, filename)
+            self.assertEqual(response.header_template, None)
+            self.assertEqual(response.footer_template, footer_template)
+            self.assertEqual(response.cmd_options, cmd_options)
+            self.assertTrue(response.has_header('Content-Disposition'))
+
+            tempfile = response.render_to_temporary_file(footer_template)
+            tempfile.seek(0)
+            footer_content = tempfile.read()
+            self.assertTrue('MEDIA_URL = {}'.format(settings.MEDIA_URL)
+                            in footer_content)
+            self.assertTrue('STATIC_URL = {}'.format(settings.STATIC_URL)
+                            in footer_content)
+
+            pdf_content = response.rendered_content
+            self.assertTrue('\0'.join('{title}'.format(**cmd_options))
+                            in pdf_content)
+
+    def test_pdf_template_view(self):
+        """Test PDFTemplateView."""
+        with override_settings(
+            MEDIA_URL='/media/',
+            STATIC_URL='/static/',
+            TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
+            TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
+                                        'testproject', 'templates')],
+            WKHTMLTOPDF_DEBUG=False,
+        ):
+            # Setup sample.html
+            template = 'sample.html'
+            filename = 'output.pdf'
+            view = PDFTemplateView.as_view(filename=filename,
+                                           template_name=template)
+
+            # As PDF
+            request = RequestFactory().get('/')
+            response = view(request)
+            self.assertEqual(response.status_code, 200)
+            response.render()
+            self.assertEqual(response['Content-Disposition'],
+                             'attachment; filename="{}"'.format(filename))
+            self.assertTrue(response.content.startswith('%PDF-'))
+            self.assertTrue(response.content.endswith('%%EOF\n'))
+
+            # As HTML
+            request = RequestFactory().get('/?as=html')
+            response = view(request)
+            self.assertEqual(response.status_code, 200)
+            response.render()
+            self.assertFalse(response.has_header('Content-Disposition'))
+            self.assertTrue(response.content.startswith('<html>'))
+
+            # POST
+            request = RequestFactory().post('/')
+            response = view(request)
+            self.assertEqual(response.status_code, 405)
 
     def test_deprecated(self):
         """Should warn when using deprecated views."""
