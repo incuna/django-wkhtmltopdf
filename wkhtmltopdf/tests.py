@@ -120,7 +120,7 @@ class TestViews(TestCase):
             STATIC_URL='/static/',
             TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
             TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
-                                        'testproject', 'templates')],
+                                        '_testproject', 'templates')],
             WKHTMLTOPDF_DEBUG=False,
         ):
             # Setup sample.html
@@ -186,7 +186,7 @@ class TestViews(TestCase):
             STATIC_URL='/static/',
             TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
             TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
-                                        'testproject', 'templates')],
+                                        '_testproject', 'templates')],
             WKHTMLTOPDF_DEBUG=False,
         ):
             # Setup sample.html
