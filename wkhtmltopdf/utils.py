@@ -19,6 +19,8 @@ def _options_to_args(**options):
     flags = []
     for name in sorted(options):
         value = options[name]
+        if value is None:
+            continue
         flags.append('--' + name.replace('_', '-'))
         if value is not True:
             flags.append(unicode(value))
@@ -38,10 +40,16 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                   {'footer_html': 'http://example.com/foot.html'}
               becomes
                   '--footer-html http://example.com/foot.html'
+
               Where there is no value passed, use True. e.g.:
                   {'disable_javascript': True}
               becomes:
                   '--disable-javascript'
+
+              To disable a default option, use None. e.g:
+                  {'quiet': None'}
+              becomes:
+                  ''
 
     example usage:
         wkhtmltopdf(pages=['/tmp/example.html'],

@@ -137,13 +137,22 @@ class PDFTemplateView(TemplateView):
     filename = 'rendered_pdf.pdf'
     footer_template = None
     header_template = None
-    orientation = 'portrait'
-    margin_bottom = 0
-    margin_left = 0
-    margin_right = 0
-    margin_top = 0
+
     response_class = PDFTemplateResponse
     html_response_class = TemplateResponse
+
+    # Command-line options to pass to wkhtmltopdf
+    cmd_options = {
+        # 'orientation': 'portrait',
+        # 'collate': True,
+        # 'quiet': None,
+    }
+
+    def __init__(self, *args, **kwargs):
+        super(PDFTemplateView, self).__init__(*args, **kwargs)
+
+        # Copy self.cmd_options to prevent clobbering the class-level object.
+        self.cmd_options = self.cmd_options.copy()
 
     def get(self, request, *args, **kwargs):
         response_class = self.response_class
@@ -160,15 +169,13 @@ class PDFTemplateView(TemplateView):
     def get_filename(self):
         return self.filename
 
+    def get_cmd_options(self):
+        return self.cmd_options
+
     def get_pdf_kwargs(self):
-        kwargs = {
-            'margin_bottom': self.margin_bottom,
-            'margin_left': self.margin_left,
-            'margin_right': self.margin_right,
-            'margin_top': self.margin_top,
-            'orientation': self.orientation,
-        }
-        return kwargs
+        warnings.warn('PDFTemplateView.get_pdf_kwargs() is deprecated in favour of get_cmd_options(). It will be removed in version 1.',
+                      PendingDeprecationWarning, 2)
+        return self.get_cmd_options()
 
     def get_context_data(self, **kwargs):
         context = super(PDFTemplateView, self).get_context_data(**kwargs)
@@ -185,10 +192,14 @@ class PDFTemplateView(TemplateView):
         """
         Returns a PDF response with a template rendered with the given context.
         """
-        filename = response_kwargs.pop('filename', self.get_filename())
-        cmd_options = response_kwargs.pop('cmd_options', self.get_pdf_kwargs())
+        filename = response_kwargs.pop('filename', None)
+        cmd_options = response_kwargs.pop('cmd_options', None)
 
         if issubclass(self.response_class, PDFTemplateResponse):
+            if filename is None:
+                filename = self.get_filename()
+            if cmd_options is None:
+                cmd_options = self.get_cmd_options()
             return super(PDFTemplateView, self).render_to_response(
                 context=context, filename=filename, cmd_options=cmd_options,
                 **response_kwargs
@@ -201,7 +212,26 @@ class PDFTemplateView(TemplateView):
 
 
 class PdfTemplateView(PDFTemplateView): #TODO: Remove this in v1.0
+    orientation = 'portrait'
+    margin_bottom = 0
+    margin_left = 0
+    margin_right = 0
+    margin_top = 0
+
     def __init__(self, *args, **kwargs):
         warnings.warn('PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.',
                       PendingDeprecationWarning, 2)
         super(PdfTemplateView, self).__init__(*args, **kwargs)
+
+    def get_cmd_options(self):
+        return self.get_pdf_kwargs()
+
+    def get_pdf_kwargs(self):
+        kwargs = {
+            'margin_bottom': self.margin_bottom,
+            'margin_left': self.margin_left,
+            'margin_right': self.margin_right,
+            'margin_top': self.margin_top,
+            'orientation': self.orientation,
+        }
+        return kwargs
