@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import os
 from re import compile
 from tempfile import NamedTemporaryFile
 import warnings
@@ -8,7 +7,6 @@ import warnings
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.http import HttpResponse
-from django.template.context import RequestContext
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
@@ -16,6 +14,8 @@ from .utils import (content_disposition_filename, wkhtmltopdf)
 
 
 class PDFResponse(HttpResponse):
+    """HttpResponse that sets the headers for PDF output."""
+
     def __init__(self, content, mimetype=None, status=200,
                  content_type=None, filename=None, *args, **kwargs):
 
@@ -134,10 +134,17 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 
 
 class PDFTemplateView(TemplateView):
-    filename = 'rendered_pdf.pdf'
-    footer_template = None
-    header_template = None
+    """Class-based view for HTML templates rendered to PDF."""
 
+    # Filename for downloaded PDF. If None, the response is inline.
+    filename = 'rendered_pdf.pdf'
+
+    # Filenames for the content, header, and footer templates.
+    template_name = None
+    header_template = None
+    footer_template = None
+
+    # TemplateResponse classes for PDF and HTML
     response_class = PDFTemplateResponse
     html_response_class = TemplateResponse
 
