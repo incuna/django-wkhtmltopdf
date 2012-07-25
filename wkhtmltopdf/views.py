@@ -5,12 +5,12 @@ from tempfile import NamedTemporaryFile
 import warnings
 
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
 
-from .utils import (content_disposition_filename, wkhtmltopdf)
+from .utils import (content_disposition_filename, override_settings,
+                    pathname2fileurl, wkhtmltopdf)
 
 
 class PDFResponse(HttpResponse):
@@ -51,7 +51,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
     def __init__(self, request, template, context=None, mimetype=None,
                  status=None, content_type=None, current_app=None,
                  filename=None, header_template=None, footer_template=None,
-                 cmd_options=None, *args, **kwargs):
+                 cmd_options=None, override_settings=None,
+                 *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
@@ -70,12 +71,23 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             cmd_options = {}
         self.cmd_options = cmd_options
 
+        self.override_settings = override_settings
+
     def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
                                  suffix='', prefix='tmp', dir=None,
                                  delete=True):
         template = self.resolve_template(template_name)
-        context = self.resolve_context(self.context_data)
-        content = template.render(context)
+
+        # Since many things require a sensible settings.MEDIA_URL and
+        # settings.STATIC_URL, including TEMPLATE_CONTEXT_PROCESSORS;
+        # the settings themselves need to be overridden when rendering.
+        #
+        # This allows django-wkhtmltopdf to play nicely with the
+        # staticfiles app, for instance.
+        with override_settings(**self.get_override_settings()):
+            context = self.resolve_context(self.context_data)
+            content = template.render(context)
+
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
                                       dir=dir, delete=delete)
@@ -132,6 +144,31 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             for f in filter(None, (input_file, header_file, footer_file)):
                 f.close()
 
+    def get_override_settings(self):
+        """Returns a dictionary of settings to override for response_class"""
+        overrides = {
+            'MEDIA_ROOT': settings.MEDIA_ROOT,
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_ROOT': settings.STATIC_ROOT,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        if self.override_settings is not None:
+            overrides.update(self.override_settings)
+
+        has_scheme = compile(r'^[^:/]+://')
+
+        # If MEDIA_URL doesn't have a scheme, we transform it into a
+        # file:// URL based on MEDIA_ROOT.
+        urls = [('MEDIA_URL', 'MEDIA_ROOT'),
+                ('STATIC_URL', 'STATIC_ROOT')]
+        for url, root in urls:
+            if not has_scheme.match(overrides[url]):
+                overrides[url] = pathname2fileurl(overrides[root])
+                if not overrides[url].endswith('/'):
+                    overrides[url] += '/'
+
+        return overrides
+
 
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
@@ -184,34 +221,26 @@ class PDFTemplateView(TemplateView):
                       PendingDeprecationWarning, 2)
         return self.get_cmd_options()
 
-    def get_context_data(self, **kwargs):
-        context = super(PDFTemplateView, self).get_context_data(**kwargs)
-
-        match_full_url = compile(r'^https?://')
-        if not match_full_url.match(settings.STATIC_URL):
-            context['STATIC_URL'] = 'http://' + Site.objects.get_current().domain + settings.STATIC_URL
-        if not match_full_url.match(settings.MEDIA_URL):
-            context['MEDIA_URL'] = 'http://' + Site.objects.get_current().domain + settings.MEDIA_URL
-
-        return context
-
     def render_to_response(self, context, **response_kwargs):
         """
         Returns a PDF response with a template rendered with the given context.
         """
         filename = response_kwargs.pop('filename', None)
         cmd_options = response_kwargs.pop('cmd_options', None)
+        override_settings = response_kwargs.pop('override_settings', None)
 
         if issubclass(self.response_class, PDFTemplateResponse):
             if filename is None:
                 filename = self.get_filename()
+
             if cmd_options is None:
                 cmd_options = self.get_cmd_options()
+
             return super(PDFTemplateView, self).render_to_response(
                 context=context, filename=filename,
                 header_template=self.header_template,
                 footer_template=self.footer_template,
-                cmd_options=cmd_options,
+                cmd_options=cmd_options, override_settings=override_settings,
                 **response_kwargs
             )
         else:

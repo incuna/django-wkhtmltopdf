@@ -117,7 +117,13 @@ class TestViews(TestCase):
 
         with override_settings(
             MEDIA_URL='/media/',
+            MEDIA_ROOT='/tmp/media',
             STATIC_URL='/static/',
+            STATIC_ROOT='/tmp/static',
+            TEMPLATE_CONTEXT_PROCESSORS=[
+                'django.core.context_processors.media',
+                'django.core.context_processors.static',
+            ],
             TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
             TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
                                         '_testproject', 'templates')],
@@ -151,7 +157,7 @@ class TestViews(TestCase):
             self.assertTrue(pdf_content.startswith('%PDF-'))
             self.assertTrue(pdf_content.endswith('%%EOF\n'))
 
-            # Header
+            # Footer
             filename = 'output.pdf'
             footer_template = 'footer.html'
             cmd_options = {'title': 'Test PDF'}
@@ -170,20 +176,53 @@ class TestViews(TestCase):
             tempfile = response.render_to_temporary_file(footer_template)
             tempfile.seek(0)
             footer_content = tempfile.read()
-            self.assertTrue('MEDIA_URL = {}'.format(settings.MEDIA_URL)
-                            in footer_content)
-            self.assertTrue('STATIC_URL = {}'.format(settings.STATIC_URL)
-                            in footer_content)
+
+            media_url = 'MEDIA_URL = file://{}/'.format(settings.MEDIA_ROOT)
+            self.assertTrue(
+                media_url in footer_content,
+                "{!r} not in {!r}".format(media_url, footer_content)
+            )
+
+            static_url = 'STATIC_URL = file://{}/'.format(settings.STATIC_ROOT)
+            self.assertTrue(
+                static_url in footer_content,
+                "{!r} not in {!r}".format(static_url, footer_content)
+            )
 
             pdf_content = response.rendered_content
             self.assertTrue('\0'.join('{title}'.format(**cmd_options))
                             in pdf_content)
+
+            # Override settings
+            response = PDFTemplateResponse(request=request,
+                                           template=template,
+                                           context=context,
+                                           filename=filename,
+                                           footer_template=footer_template,
+                                           cmd_options=cmd_options,
+                                           override_settings={
+                                               'STATIC_URL': 'file:///tmp/s/'
+                                           })
+            tempfile = response.render_to_temporary_file(footer_template)
+            tempfile.seek(0)
+            footer_content = tempfile.read()
+
+            static_url = 'STATIC_URL = {}'.format('file:///tmp/s/')
+            self.assertTrue(
+                static_url in footer_content,
+                "{!r} not in {!r}".format(static_url, footer_content)
+            )
+            self.assertEqual(settings.STATIC_URL, '/static/')
 
     def test_pdf_template_view(self):
         """Test PDFTemplateView."""
         with override_settings(
             MEDIA_URL='/media/',
             STATIC_URL='/static/',
+            TEMPLATE_CONTEXT_PROCESSORS=[
+                'django.core.context_processors.media',
+                'django.core.context_processors.static',
+            ],
             TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
             TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
                                         '_testproject', 'templates')],
@@ -193,7 +232,8 @@ class TestViews(TestCase):
             template = 'sample.html'
             filename = 'output.pdf'
             view = PDFTemplateView.as_view(filename=filename,
-                                           template_name=template)
+                                           template_name=template,
+                                           footer_template='footer.html')
 
             # As PDF
             request = RequestFactory().get('/')

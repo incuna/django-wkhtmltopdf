@@ -5,6 +5,7 @@ from itertools import chain
 from os import fdopen
 import sys
 from tempfile import mkstemp
+import urllib
 import warnings
 
 from django.conf import settings
@@ -122,6 +123,11 @@ def http_quote(string):
             string = string.encode('ascii', 'replace')
     # Wrap in double-quotes for ; , and the like
     return '"{!s}"'.format(string.replace('\\', '\\\\').replace('"', '\\"'))
+
+
+def pathname2fileurl(pathname):
+    """Returns a file:// URL for pathname. Handles OS-specific conversions."""
+    return 'file://' + urllib.pathname2url(pathname)
 
 
 try:
