@@ -100,6 +100,18 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             tempfile.close()
             raise
 
+    def convert_to_pdf(self, filename,
+                       header_filename=None, footer_filename=None):
+        cmd_options = self.cmd_options.copy()
+        # Clobber header_html and footer_html only if filenames are
+        # provided. These keys may be in self.cmd_options as hardcoded
+        # static files.
+        if header_filename is not None:
+            cmd_options['header_html'] = header_filename
+        if footer_filename is not None:
+            cmd_options['footer_html'] = footer_filename
+        return wkhtmltopdf(pages=[filename], **cmd_options)
+
     @property
     def rendered_content(self):
         """Returns the freshly rendered content for the template and context
@@ -111,9 +123,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         """
         debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', False)
 
-        cmd_options = self.cmd_options.copy()
-
         input_file = header_file = footer_file = None
+        header_filename = footer_filename = None
 
         try:
             input_file = self.render_to_temporary_file(
@@ -128,7 +139,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                     prefix='wkhtmltopdf', suffix='.html',
                     delete=(not debug)
                 )
-                cmd_options.setdefault('header_html', header_file.name)
+                header_filename = header_file.name
 
             if self.footer_template:
                 footer_file = self.render_to_temporary_file(
@@ -136,9 +147,11 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                     prefix='wkhtmltopdf', suffix='.html',
                     delete=(not debug)
                 )
-                cmd_options.setdefault('footer_html', footer_file.name)
+                footer_filename = footer_file.name
 
-            return wkhtmltopdf(pages=[input_file.name], **cmd_options)
+            return self.convert_to_pdf(filename=input_file.name,
+                                       header_filename=header_filename,
+                                       footer_filename=footer_filename)
         finally:
             # Clean up temporary files
             for f in filter(None, (input_file, header_file, footer_file)):
