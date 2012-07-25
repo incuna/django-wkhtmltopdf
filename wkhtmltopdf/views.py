@@ -121,7 +121,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         response content, you must either call render(), or set the
         content explicitly using the value of this property.
         """
-        debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', False)
+        debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
 
         input_file = header_file = footer_file = None
         header_filename = footer_filename = None
