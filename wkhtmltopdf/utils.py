@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from copy import copy
 from itertools import chain
 from os import fdopen
+import os
 import sys
 from tempfile import mkstemp
 import urllib
@@ -74,12 +75,16 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         options = copy(options)
     options.update(kwargs)
 
+    env = getattr(settings, 'WKHTMLTOPDF_ENV', None)
+    if env is not None:
+        env = dict(os.environ, **env)
+
     cmd = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
     args = list(chain([cmd],
                       _options_to_args(**options),
                       list(pages),
                       [output]))
-    return check_output(args, stderr=sys.stderr)
+    return check_output(args, stderr=sys.stderr, env=env)
 
 
 def template_to_temp_file(template_name, dictionary=None, context_instance=None):
