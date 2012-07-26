@@ -177,16 +177,16 @@ class TestViews(TestCase):
             tempfile.seek(0)
             footer_content = tempfile.read()
 
-            media_url = 'MEDIA_URL = file://{}/'.format(settings.MEDIA_ROOT)
+            media_url = 'MEDIA_URL = file://{0}/'.format(settings.MEDIA_ROOT)
             self.assertTrue(
                 media_url in footer_content,
-                "{!r} not in {!r}".format(media_url, footer_content)
+                "{0!r} not in {1!r}".format(media_url, footer_content)
             )
 
-            static_url = 'STATIC_URL = file://{}/'.format(settings.STATIC_ROOT)
+            static_url = 'STATIC_URL = file://{0}/'.format(settings.STATIC_ROOT)
             self.assertTrue(
                 static_url in footer_content,
-                "{!r} not in {!r}".format(static_url, footer_content)
+                "{0!r} not in {1!r}".format(static_url, footer_content)
             )
 
             pdf_content = response.rendered_content
@@ -207,10 +207,10 @@ class TestViews(TestCase):
             tempfile.seek(0)
             footer_content = tempfile.read()
 
-            static_url = 'STATIC_URL = {}'.format('file:///tmp/s/')
+            static_url = 'STATIC_URL = {0}'.format('file:///tmp/s/')
             self.assertTrue(
                 static_url in footer_content,
-                "{!r} not in {!r}".format(static_url, footer_content)
+                "{0!r} not in {1!r}".format(static_url, footer_content)
             )
             self.assertEqual(settings.STATIC_URL, '/static/')
 
@@ -241,7 +241,7 @@ class TestViews(TestCase):
             self.assertEqual(response.status_code, 200)
             response.render()
             self.assertEqual(response['Content-Disposition'],
-                             'attachment; filename="{}"'.format(filename))
+                             'attachment; filename="{0}"'.format(filename))
             self.assertTrue(response.content.startswith('%PDF-'))
             self.assertTrue(response.content.endswith('%%EOF\n'))
 
@@ -285,7 +285,7 @@ class TestViews(TestCase):
             self.assertEqual(w[0].category, PendingDeprecationWarning)
             self.assertTrue(
                 'PDFTemplateView' in str(w[0].message),
-                "'PDFTemplateView' not in {!r}".format(w[0].message))
+                "'PDFTemplateView' not in {0!r}".format(w[0].message))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             PdfResponse(None, None)
@@ -293,7 +293,7 @@ class TestViews(TestCase):
             self.assertEqual(w[0].category, PendingDeprecationWarning)
             self.assertTrue(
                 'PDFResponse' in str(w[0].message),
-                "'PDFResponse' not in {!r}".format(w[0].message))
+                "'PDFResponse' not in {0!r}".format(w[0].message))
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             PDFTemplateView().get_pdf_kwargs()
@@ -301,4 +301,4 @@ class TestViews(TestCase):
             self.assertEqual(w[0].category, PendingDeprecationWarning)
             self.assertTrue(
                 'get_pdf_kwargs()' in str(w[0].message),
-                "'get_pdf_kwargs()' not in {!r}".format(w[0].message))
+                "'get_pdf_kwargs()' not in {0!r}".format(w[0].message))
