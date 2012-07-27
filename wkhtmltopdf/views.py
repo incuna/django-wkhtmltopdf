@@ -2,7 +2,6 @@ from __future__ import absolute_import
 
 from re import compile
 from tempfile import NamedTemporaryFile
-import warnings
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -36,13 +35,6 @@ class PDFResponse(HttpResponse):
             self['Content-Disposition'] = header_content
         else:
             del self['Content-Disposition']
-
-
-class PdfResponse(PDFResponse):
-    def __init__(self, content, filename):
-        warnings.warn('PdfResponse is deprecated in favour of PDFResponse. It will be removed in version 1.',
-                      PendingDeprecationWarning, 2)
-        super(PdfResponse, self).__init__(content, filename=filename)
 
 
 class PDFTemplateResponse(TemplateResponse, PDFResponse):
@@ -229,11 +221,6 @@ class PDFTemplateView(TemplateView):
     def get_cmd_options(self):
         return self.cmd_options
 
-    def get_pdf_kwargs(self):
-        warnings.warn('PDFTemplateView.get_pdf_kwargs() is deprecated in favour of get_cmd_options(). It will be removed in version 1.',
-                      PendingDeprecationWarning, 2)
-        return self.get_cmd_options()
-
     def render_to_response(self, context, **response_kwargs):
         """
         Returns a PDF response with a template rendered with the given context.
@@ -261,29 +248,3 @@ class PDFTemplateView(TemplateView):
                 context=context,
                 **response_kwargs
             )
-
-
-class PdfTemplateView(PDFTemplateView): #TODO: Remove this in v1.0
-    orientation = 'portrait'
-    margin_bottom = 0
-    margin_left = 0
-    margin_right = 0
-    margin_top = 0
-
-    def __init__(self, *args, **kwargs):
-        warnings.warn('PdfTemplateView is deprecated in favour of PDFTemplateView. It will be removed in version 1.',
-                      PendingDeprecationWarning, 2)
-        super(PdfTemplateView, self).__init__(*args, **kwargs)
-
-    def get_cmd_options(self):
-        return self.get_pdf_kwargs()
-
-    def get_pdf_kwargs(self):
-        kwargs = {
-            'margin_bottom': self.margin_bottom,
-            'margin_left': self.margin_left,
-            'margin_right': self.margin_right,
-            'margin_top': self.margin_top,
-            'orientation': self.orientation,
-        }
-        return kwargs
