@@ -17,7 +17,7 @@ from .subprocess import check_output
 
 
 def _options_to_args(**options):
-    """Converts ``options`` into a string of command-line arguments."""
+    """Converts ``options`` into a list of command-line arguments."""
     flags = []
     for name in sorted(options):
         value = options[name]
