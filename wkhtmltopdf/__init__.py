@@ -3,5 +3,4 @@ if 'DJANGO_SETTINGS_MODULE' in os.environ:
     from .utils import *
 
 __author__ = 'Incuna Ltd'
-__version__ = '0.3'
-
+__version__ = '1.0-rc1'
