@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
-from re import compile
 from tempfile import NamedTemporaryFile
+import re
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -160,7 +160,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         if self.override_settings is not None:
             overrides.update(self.override_settings)
 
-        has_scheme = compile(r'^[^:/]+://')
+        has_scheme = re.compile(r'^[^:/]+://')
 
         # If MEDIA_URL doesn't have a scheme, we transform it into a
         # file:// URL based on MEDIA_ROOT.
