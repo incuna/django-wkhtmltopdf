@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 import os
 import sys
-import warnings
 
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -275,30 +274,3 @@ class TestViews(TestCase):
         view.cmd_options.update(cmd_options)
         self.assertEqual(view.cmd_options, cmd_options)
         self.assertEqual(PDFTemplateView.cmd_options, {})
-
-    def test_deprecated(self):
-        """Should warn when using deprecated views."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            PdfTemplateView()
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[0].category, PendingDeprecationWarning)
-            self.assertTrue(
-                'PDFTemplateView' in str(w[0].message),
-                "'PDFTemplateView' not in {0!r}".format(w[0].message))
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            PdfResponse(None, None)
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[0].category, PendingDeprecationWarning)
-            self.assertTrue(
-                'PDFResponse' in str(w[0].message),
-                "'PDFResponse' not in {0!r}".format(w[0].message))
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            PDFTemplateView().get_pdf_kwargs()
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[0].category, PendingDeprecationWarning)
-            self.assertTrue(
-                'get_pdf_kwargs()' in str(w[0].message),
-                "'get_pdf_kwargs()' not in {0!r}".format(w[0].message))

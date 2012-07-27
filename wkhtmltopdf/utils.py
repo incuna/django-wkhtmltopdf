@@ -7,7 +7,6 @@ import os
 import sys
 from tempfile import mkstemp
 import urllib
-import warnings
 
 from django.conf import settings
 from django.template import loader
@@ -85,18 +84,6 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                       list(pages),
                       [output]))
     return check_output(args, stderr=sys.stderr, env=env)
-
-
-def template_to_temp_file(template_name, dictionary=None, context_instance=None):
-    """
-    Renders a template to a temp file, and returns the path of the file.
-    """
-    warnings.warn('template_to_temp_file is deprecated in favour of PDFResponse. It will be removed in version 1.',
-                  PendingDeprecationWarning, 2)
-    file_descriptor, tempfile_path = mkstemp(suffix='.html')
-    with fdopen(file_descriptor, 'wt') as f:
-        f.write(smart_str(loader.render_to_string(template_name, dictionary=dictionary, context_instance=context_instance)))
-    return tempfile_path
 
 
 def content_disposition_filename(filename):
