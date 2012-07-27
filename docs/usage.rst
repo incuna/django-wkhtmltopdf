@@ -1,19 +1,48 @@
 Usage
 =====
 
-The ``PDFTemplateView`` takes a selection of variables, most of which get passed
-to the underlying wkhtmltopdf binary. The exceptions are:
+The :py:class:`PDFTemplateView` is a Django class-based view.
+By default, it uses :py:class:`PDFTemplateResponse` to render an HTML
+template to PDF.
+It accepts the following class attributes:
 
-* filename
-* footer_template
-* header_template
-* response
-* template_name
+:py:attr:`template_name`
+    The full name of a template to use as the body of the PDF.
 
-wkhtmltopdf options can be found by running ``wkhtmltopdf --help``. Unfortunately
-they don't provide hosted documentation. Any variables you pass to django-wkhtmltopdf
-need to be underscored. They will be converted to hyphenated variables for use with
-the wkhtmltopdf binary.
+:py:attr:`header_template`
+    Optional.
+    The full name of a template to use as the header on each page.
+
+:py:attr:`footer_template`
+    Optional.
+    The full name of a template to use as the footer on each page.
+
+:py:attr:`filename`
+    The filename to use when responding with an attachment containing
+    the PDF.
+    Default is ``'rendered_pdf.pdf'``.
+
+    If ``None``, the view returns the PDF output inline,
+    not as an attachment.
+
+:py:attr:`response_class`
+    The response class to be returned by :py:meth:`render_to_response`
+    method.
+    Default is :py:class:`PDFTemplateResponse`.
+
+:py:attr:`html_response_class`
+    The response class to be returned by :py:meth:`render_to_response`
+    method, when rendering as HTML.
+    See note below.
+    Default is :py:class:`TemplateResponse`.
+
+:py:attr:`cmd_options`
+    The dictionary of command-line arguments passed to the underlying
+    ``wkhtmltopdf`` binary.
+    Default is ``{}``.
+
+    wkhtmltopdf options can be found by running ``wkhtmltopdf --help``.
+    Unfortunately they don't provide hosted documentation.
 
 .. note::
 
@@ -24,7 +53,7 @@ the wkhtmltopdf binary.
 Simple Example
 --------------
 
-Point a URL at PDFTemplateView:
+Point a URL at :py:class:`PDFTemplateView`:
 
 .. code-block:: python
 
@@ -43,7 +72,8 @@ Point a URL at PDFTemplateView:
 Advanced Example
 ----------------
 
-Point a URL (as above) at your own view that subclasses ``PDFTemplateView`` and
+Point a URL (as above) at your own view that subclasses
+:py:class:`PDFTemplateView`
 and override the sections you need to.
 
 .. code-block:: python
@@ -53,6 +83,7 @@ and override the sections you need to.
 
     class MyPDF(PDFTemplateView):
         filename = 'my_pdf.pdf'
-        margin_top = 3
         template_name = 'my_template.html'
-
+        cmd_options = {
+            'margin-top': 3,
+        }
