@@ -1,16 +1,13 @@
 from __future__ import absolute_import
 
 from copy import copy
+from functools import wraps
 from itertools import chain
-from os import fdopen
 import os
 import sys
-from tempfile import mkstemp
 import urllib
 
 from django.conf import settings
-from django.template import loader
-from django.utils.encoding import smart_str
 
 from .subprocess import check_output
 
