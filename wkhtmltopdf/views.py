@@ -66,7 +66,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         self.override_settings = override_settings
 
     def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
-                                 suffix='', prefix='tmp', dir=None,
+                                 suffix='.html', prefix='tmp', dir=None,
                                  delete=True):
         template = self.resolve_template(template_name)
 
