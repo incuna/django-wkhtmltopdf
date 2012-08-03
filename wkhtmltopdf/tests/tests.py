@@ -8,9 +8,9 @@ import sys
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from .subprocess import CalledProcessError
-from .utils import override_settings, _options_to_args, wkhtmltopdf
-from .views import PDFResponse, PDFTemplateView, PDFTemplateResponse
+from wkhtmltopdf.subprocess import CalledProcessError
+from wkhtmltopdf.utils import override_settings, _options_to_args, wkhtmltopdf
+from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
 class TestUtils(TestCase):
