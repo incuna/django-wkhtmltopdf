@@ -1,23 +1,19 @@
 from __future__ import absolute_import
 
 from copy import copy
+from functools import wraps
 from itertools import chain
-from os import fdopen
 import os
 import sys
-from tempfile import mkstemp
 import urllib
-import warnings
 
 from django.conf import settings
-from django.template import loader
-from django.utils.encoding import smart_str
 
 from .subprocess import check_output
 
 
 def _options_to_args(**options):
-    """Converts ``options`` into a string of command-line arguments."""
+    """Converts ``options`` into a list of command-line arguments."""
     flags = []
     for name in sorted(options):
         value = options[name]
@@ -85,18 +81,6 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                       list(pages),
                       [output]))
     return check_output(args, stderr=sys.stderr, env=env)
-
-
-def template_to_temp_file(template_name, dictionary=None, context_instance=None):
-    """
-    Renders a template to a temp file, and returns the path of the file.
-    """
-    warnings.warn('template_to_temp_file is deprecated in favour of PDFResponse. It will be removed in version 1.',
-                  PendingDeprecationWarning, 2)
-    file_descriptor, tempfile_path = mkstemp(suffix='.html')
-    with fdopen(file_descriptor, 'wt') as f:
-        f.write(smart_str(loader.render_to_string(template_name, dictionary=dictionary, context_instance=context_instance)))
-    return tempfile_path
 
 
 def content_disposition_filename(filename):

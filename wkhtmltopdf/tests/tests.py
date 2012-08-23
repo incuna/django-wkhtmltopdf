@@ -4,16 +4,13 @@ from __future__ import absolute_import
 
 import os
 import sys
-import warnings
 
 from django.test import TestCase
 from django.test.client import RequestFactory
 
-from .subprocess import CalledProcessError
-from .utils import (override_settings,
-                    _options_to_args, template_to_temp_file, wkhtmltopdf)
-from .views import (PDFResponse, PdfResponse, PDFTemplateResponse,
-                    PDFTemplateView, PdfTemplateView)
+from wkhtmltopdf.subprocess import CalledProcessError
+from wkhtmltopdf.utils import override_settings, _options_to_args, wkhtmltopdf
+from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
 class TestUtils(TestCase):
@@ -21,6 +18,7 @@ class TestUtils(TestCase):
         # Clear standard error
         self._stderr = sys.stderr
         sys.stderr = open(os.devnull, 'w')
+        self.factory = RequestFactory()
 
     def tearDown(self):
         sys.stderr = self._stderr
@@ -36,39 +34,36 @@ class TestUtils(TestCase):
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
         title = 'A test template.'
-        temp_file = template_to_temp_file('sample.html', {'title': title})
-        pdf_output = None
+        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        temp_file = response.render_to_temporary_file('sample.html')
         try:
             # Standard call
-            pdf_output = wkhtmltopdf(pages=[temp_file])
+            pdf_output = wkhtmltopdf(pages=[temp_file.name])
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Single page
-            pdf_output = wkhtmltopdf(pages=temp_file)
+            pdf_output = wkhtmltopdf(pages=temp_file.name)
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Unicode
-            pdf_output = wkhtmltopdf(pages=[temp_file], title=u'♥')
+            pdf_output = wkhtmltopdf(pages=[temp_file.name], title=u'♥')
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Invalid arguments
             self.assertRaises(CalledProcessError,
                               wkhtmltopdf, pages=[])
         finally:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+            temp_file.close()
 
-    def test_template_to_temp_file(self):
+    def test_PDFTemplateResponse_render_to_temporary_file(self):
         """Should render a template to a temporary file."""
         title = 'A test template.'
-        temp_file = template_to_temp_file('sample.html', {'title': title})
-        try:
-            with open(temp_file, 'r') as f:
-                saved_content = f.read()
-            self.assertTrue(title in saved_content)
-        finally:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
+        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        temp_file = response.render_to_temporary_file('sample.html')
+        temp_file.seek(0)
+        saved_content = temp_file.read()
+        self.assertTrue(title in saved_content)
+        temp_file.close()
 
 
 class TestViews(TestCase):
@@ -275,30 +270,3 @@ class TestViews(TestCase):
         view.cmd_options.update(cmd_options)
         self.assertEqual(view.cmd_options, cmd_options)
         self.assertEqual(PDFTemplateView.cmd_options, {})
-
-    def test_deprecated(self):
-        """Should warn when using deprecated views."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            PdfTemplateView()
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[0].category, PendingDeprecationWarning)
-            self.assertTrue(
-                'PDFTemplateView' in str(w[0].message),
-                "'PDFTemplateView' not in {0!r}".format(w[0].message))
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            PdfResponse(None, None)
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[0].category, PendingDeprecationWarning)
-            self.assertTrue(
-                'PDFResponse' in str(w[0].message),
-                "'PDFResponse' not in {0!r}".format(w[0].message))
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always')
-            PDFTemplateView().get_pdf_kwargs()
-            self.assertEqual(len(w), 1)
-            self.assertEqual(w[0].category, PendingDeprecationWarning)
-            self.assertTrue(
-                'get_pdf_kwargs()' in str(w[0].message),
-                "'get_pdf_kwargs()' not in {0!r}".format(w[0].message))
