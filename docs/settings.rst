@@ -21,7 +21,7 @@ this app will look for the binary using the default OS paths.
 WKHTMLTOPDF_CMD_OPTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Default: ``{'quiet': True}``
+Default: ``{'encoding': 'utf8', 'quiet': True}``
 
 A dictionary of command-line arguments to pass to the ``wkhtmltopdf``
 binary.
