@@ -6,6 +6,7 @@ import re
 from django.conf import settings
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
+from django.utils.encoding import smart_str
 from django.views.generic import TemplateView
 
 from .utils import (content_disposition_filename, override_settings,
@@ -78,7 +79,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         # staticfiles app, for instance.
         with override_settings(**self.get_override_settings()):
             context = self.resolve_context(self.context_data)
-            content = template.render(context)
+            content = smart_str(template.render(context))
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,

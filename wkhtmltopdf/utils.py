@@ -71,6 +71,9 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         options = copy(options)
     options.update(kwargs)
 
+    # Force --encoding utf8 unless the user has explicitly overridden this.
+    options.setdefault('encoding', 'utf8')
+
     env = getattr(settings, 'WKHTMLTOPDF_ENV', None)
     if env is not None:
         env = dict(os.environ, **env)
