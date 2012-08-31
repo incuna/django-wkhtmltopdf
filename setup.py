@@ -12,7 +12,7 @@ setup(
     long_description=open('README.rst').read(),
     author=wkhtmltopdf.__author__,
     author_email='admin@incuna.com',
-    url='http://incuna.com/',
+    url='https://github.com/incuna/django-wkhtmltopdf',
     install_requires=['Django>=1.3'],
     zip_safe=False,
 )
