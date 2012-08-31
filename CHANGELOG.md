@@ -2,6 +2,22 @@ Changelog for django-wkhtmltopdf
 ================================
 
 
+1.0.1
+-----
+
+* Fixed a bug with unicode characters.
+
+
+1.0
+---
+
+* Refactor of the PDFTemplateView to expose more options as class attributes
+* Addition/restructuring of several settings: `WKHTMLTOPDF_CMD`,
+  `WKHTMLTOPDF_CMD_OPTIONS`, `WKHTMLTOPDF_DEBUG`, `WKHTMLTOPDF_ENV`
+* Reliable methods of passing command line arguments to the binary
+* Add compatibility by default with `staticfiles` and `django-compressor`
+
+
 0.3
 ---
 
