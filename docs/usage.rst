@@ -87,3 +87,14 @@ and override the sections you need to.
         cmd_options = {
             'margin-top': 3,
         }
+
+Unicode characters
+------------------
+
+Templates containing utf-8 characters should be supported. You will need to
+ensure that you set the content type in your template file for `wkhtmltopdf` to
+interpret it properly.
+
+.. code-block:: html
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
