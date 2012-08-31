@@ -253,6 +253,39 @@ class TestViews(TestCase):
             response = view(request)
             self.assertEqual(response.status_code, 405)
 
+    def test_pdf_template_view_unicode(self):
+        """Test PDFTemplateView."""
+        with override_settings(
+            MEDIA_URL='/media/',
+            STATIC_URL='/static/',
+            TEMPLATE_CONTEXT_PROCESSORS=[
+                'django.core.context_processors.media',
+                'django.core.context_processors.static',
+            ],
+            TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
+            TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
+                                        '_testproject', 'templates')],
+            WKHTMLTOPDF_DEBUG=False,
+        ):
+            # Setup sample.html
+            template = 'unicode.html'
+            filename = 'output.pdf'
+            view = PDFTemplateView.as_view(filename=filename,
+                                           template_name=template)
+
+            # As PDF
+            request = RequestFactory().get('/')
+            response = view(request)
+            self.assertEqual(response.status_code, 200)
+            response.render()
+            self.assertEqual(response['Content-Disposition'],
+                             'attachment; filename="{0}"'.format(filename))
+            # not sure how we can test this as the contents is all encoded...
+            # best we can do for the moment is check it's a pdf and it worked.
+            # self.assertTrue('☃' in response.content)
+            self.assertTrue(response.content.startswith('%PDF-'))
+            self.assertTrue(response.content.endswith('%%EOF\n'))
+
     def test_get_cmd_options(self):
         # Default cmd_options
         view = PDFTemplateView()
