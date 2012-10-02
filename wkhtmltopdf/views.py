@@ -44,7 +44,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
     def __init__(self, request, template, context=None, mimetype=None,
                  status=None, content_type=None, current_app=None,
                  filename=None, header_template=None, footer_template=None,
-                 cmd_options=None, override_settings=None,
+                 cmd_options=None, override_settings=None, append_urls=None,
                  *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
@@ -65,6 +65,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         self.cmd_options = cmd_options
 
         self.override_settings = override_settings
+        self.append_urls = append_urls
 
     def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
                                  suffix='.html', prefix='tmp', dir=None,
@@ -167,6 +168,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         # file:// URL based on MEDIA_ROOT.
         urls = [('MEDIA_URL', 'MEDIA_ROOT'),
                 ('STATIC_URL', 'STATIC_ROOT')]
+        if self.append_urls is not None:
+            urls.extend(self.append_urls)
         for url, root in urls:
             if not has_scheme.match(overrides[url]):
                 overrides[url] = pathname2fileurl(overrides[root])
@@ -229,6 +232,7 @@ class PDFTemplateView(TemplateView):
         filename = response_kwargs.pop('filename', None)
         cmd_options = response_kwargs.pop('cmd_options', None)
         override_settings = response_kwargs.pop('override_settings', None)
+        append_urls = response_kwargs.pop('append_urls', None)
 
         if issubclass(self.response_class, PDFTemplateResponse):
             if filename is None:
@@ -242,6 +246,7 @@ class PDFTemplateView(TemplateView):
                 header_template=self.header_template,
                 footer_template=self.footer_template,
                 cmd_options=cmd_options, override_settings=override_settings,
+                append_urls=append_urls,
                 **response_kwargs
             )
         else:
