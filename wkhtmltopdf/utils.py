@@ -83,7 +83,11 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                       _options_to_args(**options),
                       list(pages),
                       [output]))
-    return check_output(args, stderr=sys.stderr, env=env)
+    try:
+        return check_output(args, stderr=sys.stderr, env=env)
+    except AttributeError:
+        return check_output(args, env=env)
+
 
 
 def content_disposition_filename(filename):
