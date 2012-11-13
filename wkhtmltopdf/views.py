@@ -79,7 +79,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         if not media_root.endswith('/'):
             media_root += '/'
         relative_path = settings.MEDIA_URL
-        for x in re.findall('''"({0}.*?)"'''.format(relative_path), content):
+        for x in re.findall('''["|']({0}.*?)["|']'''.format(relative_path), content):
             content = content.replace(x, pathname2fileurl(media_root) + x[len(relative_path):])
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
