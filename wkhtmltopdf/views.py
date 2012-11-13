@@ -78,7 +78,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         media_root = settings.MEDIA_ROOT
         if not media_root.endswith('/'):
             media_root += '/'
-        relative_path = '/site_media/media/'
+        relative_path = settings.MEDIA_URL
         for x in re.findall('''"({0}.*?)"'''.format(relative_path), content):
             content = content.replace(x, pathname2fileurl(media_root) + x[len(relative_path):])
 
