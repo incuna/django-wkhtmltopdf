@@ -9,8 +9,7 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import smart_str
 from django.views.generic import TemplateView
 
-from .utils import (content_disposition_filename, override_settings,
-                    pathname2fileurl, wkhtmltopdf)
+from .utils import content_disposition_filename, pathname2fileurl, wkhtmltopdf
 
 
 class PDFResponse(HttpResponse):
@@ -64,26 +63,29 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             cmd_options = {}
         self.cmd_options = cmd_options
 
-        self.override_settings = override_settings
-
     def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
                                  suffix='.html', prefix='tmp', dir=None,
                                  delete=True):
         template = self.resolve_template(template_name)
 
-        # Since many things require a sensible settings.MEDIA_URL and
-        # settings.STATIC_URL, including TEMPLATE_CONTEXT_PROCESSORS;
-        # the settings themselves need to be overridden when rendering.
-        #
-        # This allows django-wkhtmltopdf to play nicely with the
-        # staticfiles app, for instance.
-        with override_settings(**self.get_override_settings()):
-            context = self.resolve_context(self.context_data)
-            content = smart_str(template.render(context))
+        context = self.resolve_context(self.context_data)
+        content = smart_str(template.render(context))
+
+        # mattl:
+        # convert all MEDIA_ROOT files into a file://URL paths
+        # in order to correctly get it displayed in PDFs
+        # disclaimer: I know it sucks, but I haz no time for better solution now
+        media_root = settings.MEDIA_ROOT
+        if not media_root.endswith('/'):
+            media_root += '/'
+        relative_path = '/site_media/media/'
+        for x in re.findall('''"({0}.*?)"'''.format(relative_path), content):
+            content = content.replace(x, pathname2fileurl(media_root) + x[len(relative_path):])
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
                                       dir=dir, delete=delete)
+
         try:
             tempfile.write(content)
             tempfile.flush()
@@ -150,31 +152,6 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             for f in filter(None, (input_file, header_file, footer_file)):
                 f.close()
 
-    def get_override_settings(self):
-        """Returns a dictionary of settings to override for response_class"""
-        overrides = {
-            'MEDIA_ROOT': settings.MEDIA_ROOT,
-            'MEDIA_URL': settings.MEDIA_URL,
-            'STATIC_ROOT': settings.STATIC_ROOT,
-            'STATIC_URL': settings.STATIC_URL,
-        }
-        if self.override_settings is not None:
-            overrides.update(self.override_settings)
-
-        has_scheme = re.compile(r'^[^:/]+://')
-
-        # If MEDIA_URL doesn't have a scheme, we transform it into a
-        # file:// URL based on MEDIA_ROOT.
-        urls = [('MEDIA_URL', 'MEDIA_ROOT'),
-                ('STATIC_URL', 'STATIC_ROOT')]
-        for url, root in urls:
-            if not has_scheme.match(overrides[url]):
-                overrides[url] = pathname2fileurl(overrides[root])
-                if not overrides[url].endswith('/'):
-                    overrides[url] += '/'
-
-        return overrides
-
 
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
@@ -228,7 +205,6 @@ class PDFTemplateView(TemplateView):
         """
         filename = response_kwargs.pop('filename', None)
         cmd_options = response_kwargs.pop('cmd_options', None)
-        override_settings = response_kwargs.pop('override_settings', None)
 
         if issubclass(self.response_class, PDFTemplateResponse):
             if filename is None:
@@ -241,7 +217,7 @@ class PDFTemplateView(TemplateView):
                 context=context, filename=filename,
                 header_template=self.header_template,
                 footer_template=self.footer_template,
-                cmd_options=cmd_options, override_settings=override_settings,
+                cmd_options=cmd_options,
                 **response_kwargs
             )
         else:
