@@ -162,11 +162,15 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         has_scheme = re.compile(r'^[^:/]+://')
 
         for x in overrides:
-            if not has_scheme.match(x['url']):
-                if not x['root'].endswith('/'):
-                    x['root'] += '/'
-                for occur in re.findall('''["|']({0}.*?)["|']'''.format(x['url']), content):
-                    content = content.replace(occur, pathname2fileurl(x['root']) + occur[len(x['url']):])
+            if has_scheme.match(x['url']):
+                continue
+
+            if not x['root'].endswith('/'):
+                x['root'] += '/'
+
+            for occur in re.findall('''["|']({0}.*?)["|']'''.format(x['url']), content):
+                content = content.replace(occur, pathname2fileurl(x['root']) + occur[len(x['url']):])
+
         return content
 
 
