@@ -1,6 +1,12 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+1.1
+---
+
+* Removed override_settings code for rewriting ther STAIC and MEDIA URLs as it
+  was not suitable for production use. It has been replaced with a string
+  replace for just now, but a proper HTML parser may be required in the future.
 
 1.0.1
 -----
