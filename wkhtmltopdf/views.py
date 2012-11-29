@@ -153,12 +153,15 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             {
             'root': settings.MEDIA_ROOT,
             'url': settings.MEDIA_URL,
-            },
-            {
-            'root': settings.STATIC_ROOT,
-            'url': settings.STATIC_URL,
             }
         ]
+        if settings.STATIC_ROOT:
+            overrides.append(
+                {
+                'root': settings.STATIC_ROOT,
+                'url': settings.STATIC_URL,
+                }
+            )
         has_scheme = re.compile(r'^[^:/]+://')
 
         for x in overrides:
