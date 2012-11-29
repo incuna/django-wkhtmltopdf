@@ -6,6 +6,7 @@ from itertools import chain
 import os
 import sys
 import urllib
+from urlparse import urljoin
 
 from django.conf import settings
 
@@ -119,4 +120,4 @@ def http_quote(string):
 
 def pathname2fileurl(pathname):
     """Returns a file:// URL for pathname. Handles OS-specific conversions."""
-    return 'file://' + urllib.pathname2url(pathname)
+    return urljoin('file:', urllib.pathname2url(pathname))
