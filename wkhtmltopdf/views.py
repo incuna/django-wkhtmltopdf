@@ -43,7 +43,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
     def __init__(self, request, template, context=None, mimetype=None,
                  status=None, content_type=None, current_app=None,
                  filename=None, header_template=None, footer_template=None,
-                 cmd_options=None, override_settings=None,
+                 cmd_options=None, append_urls=None,
                  *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
@@ -62,6 +62,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         if cmd_options is None:
             cmd_options = {}
         self.cmd_options = cmd_options
+
+        self.append_urls = append_urls
 
     def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
                                  suffix='.html', prefix='tmp', dir=None,
@@ -159,6 +161,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             'url': settings.STATIC_URL,
             }
         ]
+        if self.append_urls is not None:
+            overrides = dict(overrides.items() + self.append_urls.items())
         has_scheme = re.compile(r'^[^:/]+://')
 
         for x in overrides:
@@ -226,7 +230,7 @@ class PDFTemplateView(TemplateView):
         """
         filename = response_kwargs.pop('filename', None)
         cmd_options = response_kwargs.pop('cmd_options', None)
-
+        append_urls = response_kwargs.pop('append_urls', None)
         if issubclass(self.response_class, PDFTemplateResponse):
             if filename is None:
                 filename = self.get_filename()
@@ -239,6 +243,7 @@ class PDFTemplateView(TemplateView):
                 header_template=self.header_template,
                 footer_template=self.footer_template,
                 cmd_options=cmd_options,
+                append_urls=append_urls,
                 **response_kwargs
             )
         else:
