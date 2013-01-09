@@ -168,8 +168,13 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             if not x['root'].endswith('/'):
                 x['root'] += '/'
 
-            for occur in re.findall('''["|']({0}.*?)["|']'''.format(x['url']), content):
-                content = content.replace(occur, pathname2fileurl(x['root']) + occur[len(x['url']):])
+            occurences = re.findall('''["|']({0}.*?)["|']'''.format(x['url']),
+                                    content)
+            occurences = list(set(occurences))  # Remove dups
+            for occur in occurences:
+                content = content.replace(occur,
+                                          pathname2fileurl(x['root']) +
+                                          occur[len(x['url']):])
 
         return content
 
