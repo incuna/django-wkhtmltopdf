@@ -48,8 +48,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                  status=None, content_type=None, current_app=None,
                  filename=None, show_content_in_browser=None,
                  header_template=None, footer_template=None,
-                 cmd_options=None, override_settings=None,
-                 *args, **kwargs):
+                 cmd_options=None, *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
