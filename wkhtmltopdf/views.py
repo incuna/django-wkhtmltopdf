@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from tempfile import NamedTemporaryFile
-import re
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -9,7 +8,8 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import smart_str
 from django.views.generic import TemplateView
 
-from .utils import content_disposition_filename, pathname2fileurl, wkhtmltopdf
+from .utils import (content_disposition_filename, make_absolute_paths,
+    wkhtmltopdf)
 
 
 class PDFResponse(HttpResponse):
@@ -73,9 +73,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         template = self.resolve_template(template_name)
 
         context = self.resolve_context(self.context_data)
-        content = smart_str(template.render(context))
 
-        content = self.make_absolute_paths(content)
+        content = smart_str(template.render(context))
+        content = make_absolute_paths(content)
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
@@ -146,39 +146,6 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             # Clean up temporary files
             for f in filter(None, (input_file, header_file, footer_file)):
                 f.close()
-
-    def make_absolute_paths(self, content):
-        """Convert all MEDIA files into a file://URL paths in order to
-        correctly get it displayed in PDFs."""
-
-        overrides = [
-            {
-                'root': settings.MEDIA_ROOT,
-                'url': settings.MEDIA_URL,
-            },
-            {
-                'root': settings.STATIC_ROOT,
-                'url': settings.STATIC_URL,
-            }
-        ]
-        has_scheme = re.compile(r'^[^:/]+://')
-
-        for x in overrides:
-            if has_scheme.match(x['url']):
-                continue
-
-            if not x['root'].endswith('/'):
-                x['root'] += '/'
-
-            occur_pattern = '''["|']({0}.*?)["|']'''
-            occurences = re.findall(occur_pattern.format(x['url']), content)
-            occurences = list(set(occurences))  # Remove dups
-            for occur in occurences:
-                content = content.replace(occur,
-                                          pathname2fileurl(x['root']) +
-                                          occur[len(x['url']):])
-
-        return content
 
 
 class PDFTemplateView(TemplateView):
