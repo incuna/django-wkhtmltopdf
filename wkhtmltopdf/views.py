@@ -30,9 +30,10 @@ class PDFResponse(HttpResponse):
     def set_filename(self, filename, show_content_in_browser):
         self.filename = filename
         if filename:
-            fileheader = 'attachment; filename={0}'
+            # mattl: file name surrounded by double qoutes, per RFC2231
+            fileheader = 'attachment; filename="{0}"'
             if show_content_in_browser:
-                fileheader = 'filename={0}'
+                fileheader = 'inline; filename="{0}"'
 
             filename = content_disposition_filename(filename)
             header_content = fileheader.format(filename)
