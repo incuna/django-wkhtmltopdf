@@ -69,6 +69,12 @@ class TestUtils(TestCase):
 
 
 class TestViews(TestCase):
+    template = 'sample.html'
+    footer_template = 'footer.html'
+    pdf_filename = 'output.pdf'
+    attached_fileheader = 'attachment; filename="{0}"'
+    inline_fileheader = 'inline; filename="{0}"'
+
     def test_pdf_response(self):
         """Should generate the correct HttpResponse object and mimetype"""
         # 404
@@ -126,147 +132,88 @@ class TestViews(TestCase):
                                mimetype='application/x-pdf')
         self.assertEqual(response['Content-Type'], 'application/x-pdf')
 
+    def test_pdf_template_response(self, show_content=False):
+        """Test PDFTemplateResponse."""
+
+        context = {'title': 'Heading'}
+        request = RequestFactory().get('/')
+        response = PDFTemplateResponse(request=request,
+                                       template=self.template,
+                                       context=context,
+                                       show_content_in_browser=show_content)
+        self.assertEqual(response._request, request)
+        self.assertEqual(response.template_name, self.template)
+        self.assertEqual(response.context_data, context)
+        self.assertEqual(response.filename, None)
+        self.assertEqual(response.header_template, None)
+        self.assertEqual(response.footer_template, None)
+        self.assertEqual(response.cmd_options, {})
+        self.assertFalse(response.has_header('Content-Disposition'))
+
+        # Render to temporary file
+        tempfile = response.render_to_temporary_file(self.template)
+        tempfile.seek(0)
+        html_content = tempfile.read()
+        self.assertTrue(html_content.startswith('<html>'))
+        self.assertTrue('<h1>{title}</h1>'.format(**context)
+                        in html_content)
+
+        pdf_content = response.rendered_content
+        self.assertTrue(pdf_content.startswith('%PDF-'))
+        self.assertTrue(pdf_content.endswith('%%EOF\n'))
+
+        # Footer
+        cmd_options = {'title': 'Test PDF'}
+        response = PDFTemplateResponse(request=request,
+                                       template=self.template,
+                                       context=context,
+                                       filename=self.pdf_filename,
+                                       show_content_in_browser=show_content,
+                                       footer_template=self.footer_template,
+                                       cmd_options=cmd_options)
+        self.assertEqual(response.filename, self.pdf_filename)
+        self.assertEqual(response.header_template, None)
+        self.assertEqual(response.footer_template, self.footer_template)
+        self.assertEqual(response.cmd_options, cmd_options)
+        self.assertTrue(response.has_header('Content-Disposition'))
+
+        tempfile = response.render_to_temporary_file(self.footer_template)
+        tempfile.seek(0)
+        footer_content = tempfile.read()
+        footer_content = make_absolute_paths(footer_content)
+
+        media_url = 'file://{0}/'.format(settings.MEDIA_ROOT)
+        self.assertTrue(media_url in footer_content, True)
+
+        static_url = 'file://{0}/'.format(settings.STATIC_ROOT)
+        self.assertTrue(static_url in footer_content, True)
+
+        pdf_content = response.rendered_content
+        self.assertTrue('\0'.join('{title}'.format(**cmd_options))
+                        in pdf_content)
+
     def test_pdf_template_response_to_browser(self):
-        """Test PDFTemplateResponse."""
-        # Setup sample.html
-        template = 'sample.html'
-        context = {'title': 'Heading'}
-        request = RequestFactory().get('/')
-        response = PDFTemplateResponse(request=request,
-                                       template=template,
-                                       context=context,
-                                       show_content_in_browser=True)
-        self.assertEqual(response._request, request)
-        self.assertEqual(response.template_name, template)
-        self.assertEqual(response.context_data, context)
-        self.assertEqual(response.filename, None)
-        self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, None)
-        self.assertEqual(response.cmd_options, {})
-        self.assertFalse(response.has_header('Content-Disposition'))
+        self.test_pdf_template_response(show_content=True)
 
-        # Render to temporary file
-        tempfile = response.render_to_temporary_file(template)
-        tempfile.seek(0)
-        html_content = tempfile.read()
-        self.assertTrue(html_content.startswith('<html>'))
-        self.assertTrue('<h1>{title}</h1>'.format(**context)
-                        in html_content)
-
-        pdf_content = response.rendered_content
-        self.assertTrue(pdf_content.startswith('%PDF-'))
-        self.assertTrue(pdf_content.endswith('%%EOF\n'))
-
-        # Footer
-        filename = 'output.pdf'
-        footer_template = 'footer.html'
-        cmd_options = {'title': 'Test PDF'}
-        response = PDFTemplateResponse(request=request,
-                                       template=template,
-                                       context=context,
-                                       filename=filename,
-                                       show_content_in_browser=True,
-                                       footer_template=footer_template,
-                                       cmd_options=cmd_options)
-        self.assertEqual(response.filename, filename)
-        self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, footer_template)
-        self.assertEqual(response.cmd_options, cmd_options)
-        self.assertTrue(response.has_header('Content-Disposition'))
-
-        tempfile = response.render_to_temporary_file(footer_template)
-        tempfile.seek(0)
-        footer_content = tempfile.read()
-        footer_content = make_absolute_paths(footer_content)
-
-        media_url = 'file://{0}/'.format(settings.MEDIA_ROOT)
-        self.assertTrue(media_url in footer_content, True)
-
-        static_url = 'file://{0}/'.format(settings.STATIC_ROOT)
-        self.assertTrue(static_url in footer_content, True)
-
-        pdf_content = response.rendered_content
-        self.assertTrue('\0'.join('{title}'.format(**cmd_options))
-                        in pdf_content)
-
-    def test_pdf_template_response(self):
-        """Test PDFTemplateResponse."""
-        # Setup sample.html
-        template = 'sample.html'
-        context = {'title': 'Heading'}
-        request = RequestFactory().get('/')
-        response = PDFTemplateResponse(request=request,
-                                       template=template,
-                                       context=context)
-        self.assertEqual(response._request, request)
-        self.assertEqual(response.template_name, template)
-        self.assertEqual(response.context_data, context)
-        self.assertEqual(response.filename, None)
-        self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, None)
-        self.assertEqual(response.cmd_options, {})
-        self.assertFalse(response.has_header('Content-Disposition'))
-
-        # Render to temporary file
-        tempfile = response.render_to_temporary_file(template)
-        tempfile.seek(0)
-        html_content = tempfile.read()
-        self.assertTrue(html_content.startswith('<html>'))
-        self.assertTrue('<h1>{title}</h1>'.format(**context)
-                        in html_content)
-
-        pdf_content = response.rendered_content
-        self.assertTrue(pdf_content.startswith('%PDF-'))
-        self.assertTrue(pdf_content.endswith('%%EOF\n'))
-
-        # Footer
-        filename = 'output.pdf'
-        footer_template = 'footer.html'
-        cmd_options = {'title': 'Test PDF'}
-        response = PDFTemplateResponse(request=request,
-                                       template=template,
-                                       context=context,
-                                       filename=filename,
-                                       footer_template=footer_template,
-                                       cmd_options=cmd_options)
-        self.assertEqual(response.filename, filename)
-        self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, footer_template)
-        self.assertEqual(response.cmd_options, cmd_options)
-        self.assertTrue(response.has_header('Content-Disposition'))
-
-        tempfile = response.render_to_temporary_file(footer_template)
-        tempfile.seek(0)
-        footer_content = tempfile.read()
-        footer_content = make_absolute_paths(footer_content)
-
-        media_url = 'file://{0}/'.format(settings.MEDIA_ROOT)
-        self.assertTrue(media_url in footer_content, True)
-
-        static_url = 'file://{0}/'.format(settings.STATIC_ROOT)
-        self.assertTrue(static_url in footer_content, True)
-
-        pdf_content = response.rendered_content
-        self.assertTrue('\0'.join('{title}'.format(**cmd_options))
-                        in pdf_content)
-
-    def test_pdf_template_view(self):
+    def test_pdf_template_view(self, show_content=False):
         """Test PDFTemplateView."""
 
-        # Setup sample.html
-        template = 'sample.html'
-        filename = 'output.pdf'
-        view = PDFTemplateView.as_view(filename=filename,
-                                       template_name=template,
-                                       footer_template='footer.html')
+        view = PDFTemplateView.as_view(filename=self.pdf_filename,
+                                       show_content_in_browser=show_content,
+                                       template_name=self.template,
+                                       footer_template=self.footer_template)
 
         # As PDF
         request = RequestFactory().get('/')
         response = view(request)
         self.assertEqual(response.status_code, 200)
         response.render()
+
+        fileheader = self.attached_fileheader
+        if show_content:
+            fileheader = self.inline_fileheader
         self.assertEqual(response['Content-Disposition'],
-                         'attachment; filename="{0}"'.format(filename))
+                         fileheader.format(self.pdf_filename))
         self.assertTrue(response.content.startswith('%PDF-'))
         self.assertTrue(response.content.endswith('%%EOF\n'))
 
@@ -284,54 +231,26 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 405)
 
     def test_pdf_template_view_to_browser(self):
-        """Test PDFTemplateView as output to the browser."""
+        self.test_pdf_template_view(show_content=True)
 
-        # Setup sample.html
-        template = 'sample.html'
-        filename = 'output.pdf'
-        view = PDFTemplateView.as_view(filename=filename,
-                                       show_content_in_browser=True,
-                                       template_name=template,
-                                       footer_template='footer.html')
-
-        # As PDF
-        request = RequestFactory().get('/')
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        response.render()
-        self.assertEqual(response['Content-Disposition'],
-                         'inline; filename="{0}"'.format(filename))
-        self.assertTrue(response.content.startswith('%PDF-'))
-        self.assertTrue(response.content.endswith('%%EOF\n'))
-
-        # As HTML
-        request = RequestFactory().get('/?as=html')
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        response.render()
-        self.assertFalse(response.has_header('Content-Disposition'))
-        self.assertTrue(response.content.startswith('<html>'))
-
-        # POST
-        request = RequestFactory().post('/')
-        response = view(request)
-        self.assertEqual(response.status_code, 405)
-
-    def test_pdf_template_view_unicode(self):
+    def test_pdf_template_view_unicode(self, show_content=False):
         """Test PDFTemplateView."""
-        # Setup sample.html
-        template = 'unicode.html'
-        filename = 'output.pdf'
-        view = PDFTemplateView.as_view(filename=filename,
-                                       template_name=template)
+
+        view = PDFTemplateView.as_view(filename=self.pdf_filename,
+                                       show_content_in_browser=show_content,
+                                       template_name=self.template)
 
         # As PDF
         request = RequestFactory().get('/')
         response = view(request)
         self.assertEqual(response.status_code, 200)
         response.render()
+
+        fileheader = self.attached_fileheader
+        if show_content:
+            fileheader = self.inline_fileheader
         self.assertEqual(response['Content-Disposition'],
-                         'attachment; filename="{0}"'.format(filename))
+                         fileheader.format(self.pdf_filename))
         # not sure how we can test this as the contents is all encoded...
         # best we can do for the moment is check it's a pdf and it worked.
         # self.assertTrue('☃' in response.content)
@@ -339,23 +258,7 @@ class TestViews(TestCase):
         self.assertTrue(response.content.endswith('%%EOF\n'))
 
     def test_pdf_template_view_unicode_to_browser(self):
-        """Test PDFTemplateView as output to the browser."""
-        # Setup sample.html
-        template = 'unicode.html'
-        filename = 'output.pdf'
-        view = PDFTemplateView.as_view(filename=filename,
-                                       show_content_in_browser=True,
-                                       template_name=template)
-
-        # As PDF
-        request = RequestFactory().get('/')
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        response.render()
-        self.assertEqual(response['Content-Disposition'],
-                         'inline; filename="{0}"'.format(filename))
-        self.assertTrue(response.content.startswith('%PDF-'))
-        self.assertTrue(response.content.endswith('%%EOF\n'))
+        self.test_pdf_template_view_unicode(show_content=True)
 
     def test_get_cmd_options(self):
         # Default cmd_options
