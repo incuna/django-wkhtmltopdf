@@ -11,10 +11,6 @@ DATABASES = {
     }
 }
 
-# MEDIA_URL = '/media/'
-# MEDIA_ROOT = '/tmp/media'
-# STATIC_URL = '/static/'
-# STATIC_ROOT = '/tmp/static'
 MEDIA_ROOT = os.path.join(DIRNAME, 'media')
 MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(DIRNAME, 'static')
