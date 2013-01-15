@@ -16,7 +16,7 @@ class PDFResponse(HttpResponse):
     """HttpResponse that sets the headers for PDF output."""
 
     def __init__(self, content, mimetype=None, status=200, content_type=None,
-        filename=None, show_content_in_browser=None, *args, **kwargs):
+            filename=None, show_content_in_browser=None, *args, **kwargs):
 
         if content_type is None:
             content_type = 'application/pdf'
@@ -149,19 +149,17 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                 f.close()
 
     def make_absolute_paths(self, content):
-        """Convert all MEDIA files into a file://URL paths in order to correctly get it displayed in PDFs
-
-        mattl's disclaimer: I know it sucks, but it works and I haz no time for better solution now
-        """
+        """Convert all MEDIA files into a file://URL paths in order to
+        correctly get it displayed in PDFs."""
 
         overrides = [
             {
-            'root': settings.MEDIA_ROOT,
-            'url': settings.MEDIA_URL,
+                'root': settings.MEDIA_ROOT,
+                'url': settings.MEDIA_URL,
             },
             {
-            'root': settings.STATIC_ROOT,
-            'url': settings.STATIC_URL,
+                'root': settings.STATIC_ROOT,
+                'url': settings.STATIC_URL,
             }
         ]
         has_scheme = re.compile(r'^[^:/]+://')
@@ -173,8 +171,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             if not x['root'].endswith('/'):
                 x['root'] += '/'
 
-            occurences = re.findall('''["|']({0}.*?)["|']'''.format(x['url']),
-                                    content)
+            occur_pattern = '''["|']({0}.*?)["|']'''
+            occurences = re.findall(occur_pattern.format(x['url']), content)
             occurences = list(set(occurences))  # Remove dups
             for occur in occurences:
                 content = content.replace(occur,
@@ -190,7 +188,7 @@ class PDFTemplateView(TemplateView):
     # Filename for downloaded PDF. If None, the response is inline.
     filename = 'rendered_pdf.pdf'
 
-    # Send file as attachement, or if True render content in the browser.
+    # Send file as attachement. If True render content in the browser.
     show_content_in_browser = False
 
     # Filenames for the content, header, and footer templates.
