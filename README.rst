@@ -1,6 +1,8 @@
 django-wkhtmltopdf
 ==================
 
+[![Build Status](https://travis-ci.org/incuna/django-wkhtmltopdf.png)](https://travis-ci.org/incuna/django-wkhtmltopdf)
+
 
 Converts html to PDF
 --------------------
