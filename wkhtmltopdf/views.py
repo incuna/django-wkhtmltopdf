@@ -15,8 +15,8 @@ from .utils import content_disposition_filename, pathname2fileurl, wkhtmltopdf
 class PDFResponse(HttpResponse):
     """HttpResponse that sets the headers for PDF output."""
 
-    def __init__(self, content, mimetype=None, status=200,
-                 content_type=None, filename=None, *args, **kwargs):
+    def __init__(self, content, mimetype=None, status=200, content_type=None,
+        filename=None, show_content_in_browser=None, *args, **kwargs):
 
         if content_type is None:
             content_type = 'application/pdf'
@@ -25,13 +25,17 @@ class PDFResponse(HttpResponse):
                                           mimetype=mimetype,
                                           status=status,
                                           content_type=content_type)
-        self.set_filename(filename)
+        self.set_filename(filename, show_content_in_browser)
 
-    def set_filename(self, filename):
+    def set_filename(self, filename, show_content_in_browser):
         self.filename = filename
         if filename:
+            fileheader = 'attachment; filename={0}'
+            if show_content_in_browser:
+                fileheader = 'filename={0}'
+
             filename = content_disposition_filename(filename)
-            header_content = 'attachment; filename={0}'.format(filename)
+            header_content = fileheader.format(filename)
             self['Content-Disposition'] = header_content
         else:
             del self['Content-Disposition']
@@ -42,7 +46,8 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 
     def __init__(self, request, template, context=None, mimetype=None,
                  status=None, content_type=None, current_app=None,
-                 filename=None, header_template=None, footer_template=None,
+                 filename=None, show_content_in_browser=None,
+                 header_template=None, footer_template=None,
                  cmd_options=None, override_settings=None,
                  *args, **kwargs):
 
@@ -54,7 +59,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                                                   content_type=content_type,
                                                   current_app=None,
                                                   *args, **kwargs)
-        self.set_filename(filename)
+        self.set_filename(filename, show_content_in_browser)
 
         self.header_template = header_template
         self.footer_template = footer_template
@@ -185,6 +190,9 @@ class PDFTemplateView(TemplateView):
     # Filename for downloaded PDF. If None, the response is inline.
     filename = 'rendered_pdf.pdf'
 
+    # Send file as attachement, or if True render content in the browser.
+    show_content_in_browser = False
+
     # Filenames for the content, header, and footer templates.
     template_name = None
     header_template = None
@@ -241,6 +249,7 @@ class PDFTemplateView(TemplateView):
 
             return super(PDFTemplateView, self).render_to_response(
                 context=context, filename=filename,
+                show_content_in_browser=self.show_content_in_browser,
                 header_template=self.header_template,
                 footer_template=self.footer_template,
                 cmd_options=cmd_options,
