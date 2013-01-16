@@ -4,6 +4,7 @@ from copy import copy
 from functools import wraps
 from itertools import chain
 import os
+import re
 import sys
 import urllib
 from urlparse import urljoin
@@ -121,3 +122,37 @@ def http_quote(string):
 def pathname2fileurl(pathname):
     """Returns a file:// URL for pathname. Handles OS-specific conversions."""
     return urljoin('file:', urllib.pathname2url(pathname))
+
+
+def make_absolute_paths(content):
+    """Convert all MEDIA files into a file://URL paths in order to
+    correctly get it displayed in PDFs."""
+
+    overrides = [
+        {
+            'root': settings.MEDIA_ROOT,
+            'url': settings.MEDIA_URL,
+        },
+        {
+            'root': settings.STATIC_ROOT,
+            'url': settings.STATIC_URL,
+        }
+    ]
+    has_scheme = re.compile(r'^[^:/]+://')
+
+    for x in overrides:
+        if has_scheme.match(x['url']):
+            continue
+
+        if not x['root'].endswith('/'):
+            x['root'] += '/'
+
+        occur_pattern = '''["|']({0}.*?)["|']'''
+        occurences = re.findall(occur_pattern.format(x['url']), content)
+        occurences = list(set(occurences))  # Remove dups
+        for occur in occurences:
+            content = content.replace(occur,
+                                      pathname2fileurl(x['root']) +
+                                      occur[len(x['url']):])
+
+    return content
