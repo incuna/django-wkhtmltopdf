@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from tempfile import NamedTemporaryFile
-import re
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -9,14 +8,15 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import smart_str
 from django.views.generic import TemplateView
 
-from .utils import content_disposition_filename, pathname2fileurl, wkhtmltopdf
+from .utils import (content_disposition_filename, make_absolute_paths,
+    wkhtmltopdf)
 
 
 class PDFResponse(HttpResponse):
     """HttpResponse that sets the headers for PDF output."""
 
     def __init__(self, content, mimetype=None, status=200, content_type=None,
-        filename=None, show_content_in_browser=None, *args, **kwargs):
+            filename=None, show_content_in_browser=None, *args, **kwargs):
 
         if content_type is None:
             content_type = 'application/pdf'
@@ -32,7 +32,7 @@ class PDFResponse(HttpResponse):
         if filename:
             fileheader = 'attachment; filename={0}'
             if show_content_in_browser:
-                fileheader = 'filename={0}'
+                fileheader = 'inline; filename={0}'
 
             filename = content_disposition_filename(filename)
             header_content = fileheader.format(filename)
@@ -48,8 +48,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                  status=None, content_type=None, current_app=None,
                  filename=None, show_content_in_browser=None,
                  header_template=None, footer_template=None,
-                 cmd_options=None, override_settings=None,
-                 *args, **kwargs):
+                 cmd_options=None, *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
@@ -74,9 +73,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         template = self.resolve_template(template_name)
 
         context = self.resolve_context(self.context_data)
-        content = smart_str(template.render(context))
 
-        content = self.make_absolute_paths(content)
+        content = smart_str(template.render(context))
+        content = make_absolute_paths(content)
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
@@ -148,41 +147,6 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             for f in filter(None, (input_file, header_file, footer_file)):
                 f.close()
 
-    def make_absolute_paths(self, content):
-        """Convert all MEDIA files into a file://URL paths in order to correctly get it displayed in PDFs
-
-        mattl's disclaimer: I know it sucks, but it works and I haz no time for better solution now
-        """
-
-        overrides = [
-            {
-            'root': settings.MEDIA_ROOT,
-            'url': settings.MEDIA_URL,
-            },
-            {
-            'root': settings.STATIC_ROOT,
-            'url': settings.STATIC_URL,
-            }
-        ]
-        has_scheme = re.compile(r'^[^:/]+://')
-
-        for x in overrides:
-            if has_scheme.match(x['url']):
-                continue
-
-            if not x['root'].endswith('/'):
-                x['root'] += '/'
-
-            occurences = re.findall('''["|']({0}.*?)["|']'''.format(x['url']),
-                                    content)
-            occurences = list(set(occurences))  # Remove dups
-            for occur in occurences:
-                content = content.replace(occur,
-                                          pathname2fileurl(x['root']) +
-                                          occur[len(x['url']):])
-
-        return content
-
 
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
@@ -190,7 +154,7 @@ class PDFTemplateView(TemplateView):
     # Filename for downloaded PDF. If None, the response is inline.
     filename = 'rendered_pdf.pdf'
 
-    # Send file as attachement, or if True render content in the browser.
+    # Send file as attachement. If True render content in the browser.
     show_content_in_browser = False
 
     # Filenames for the content, header, and footer templates.
