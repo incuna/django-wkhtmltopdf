@@ -1,0 +1,13 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+before_script:
+  - "./before_script.sh"
+install:
+  - pip install -r wkhtmltopdf/tests/test_requirements.txt
+  - pip install .
+script:
+  - make test
+notifications:
+  email: false
