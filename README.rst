@@ -1,7 +1,7 @@
 django-wkhtmltopdf
 ==================
 
-.. image:: https://travis-ci.org/incuna/django-wkhtmltopdf.png?branch=travis-setup
+.. image:: https://travis-ci.org/incuna/django-wkhtmltopdf.png
    :target: https://travis-ci.org/incuna/django-wkhtmltopdf
 
 
