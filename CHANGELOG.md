@@ -1,12 +1,26 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+
+1.2
+---
+
+* Fixed tests.
+* Added option for not forcing download of PDF content. By default the content
+  is saved to a file, but can be displayed in the browser directly when
+  `show_content_in_browser` is set to True on `PDFTemplateView`.
+* Removed duplicates when replacing STATIC/MEDIA paths.
+* Fixed an issue when WKHTMLTOPDF_CMD consists of many parts.
+* Fixed the local file paths so it works on Windows.
+
+
 1.1
 ---
 
-* Removed override_settings code for rewriting ther STAIC and MEDIA URLs as it
+* Removed override_settings code for rewriting the STATIC and MEDIA URLs as it
   was not suitable for production use. It has been replaced with a string
   replace for just now, but a proper HTML parser may be required in the future.
+
 
 1.0.1
 -----
@@ -17,11 +31,11 @@ Changelog for django-wkhtmltopdf
 1.0
 ---
 
-* Refactor of the PDFTemplateView to expose more options as class attributes
+* Refactor of the PDFTemplateView to expose more options as class attributes.
 * Addition/restructuring of several settings: `WKHTMLTOPDF_CMD`,
-  `WKHTMLTOPDF_CMD_OPTIONS`, `WKHTMLTOPDF_DEBUG`, `WKHTMLTOPDF_ENV`
-* Reliable methods of passing command line arguments to the binary
-* Add compatibility by default with `staticfiles` and `django-compressor`
+  `WKHTMLTOPDF_CMD_OPTIONS`, `WKHTMLTOPDF_DEBUG`, `WKHTMLTOPDF_ENV`.
+* Reliable methods of passing command line arguments to the binary.
+* Add compatibility by default with `staticfiles` and `django-compressor`.
 
 
 0.3
