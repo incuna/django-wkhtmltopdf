@@ -78,7 +78,7 @@ and override the sections you need to.
 
 .. code-block:: python
 
-    from django_wkhtmltopdf.views import PDFTemplateView
+    from wkhtmltopdf.views import PDFTemplateView
 
 
     class MyPDF(PDFTemplateView):
