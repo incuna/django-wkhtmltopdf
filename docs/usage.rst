@@ -68,7 +68,7 @@ Point a URL at :py:class:`PDFTemplateView`:
         # ...
     )
 
-Or use in a view:
+Or use in a functional view:
 
 .. code-block:: python
 
