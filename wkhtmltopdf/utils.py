@@ -147,6 +147,9 @@ def make_absolute_paths(content):
         if not x['root'].endswith('/'):
             x['root'] += '/'
 
+        if x['url'] is '':
+            continue
+
         occur_pattern = '''["|']({0}.*?)["|']'''
         occurences = re.findall(occur_pattern.format(x['url']), content)
         occurences = list(set(occurences))  # Remove dups
