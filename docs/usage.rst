@@ -209,9 +209,9 @@ you can try to manually replace the offending URLs:
             def repl(match):
                 # Replace match with the appropriate file URL
                 url = match.group('url')
-                if url.startswith(settings.STATIC_URL):
+                if settings.STATIC_URL and url.startswith(settings.STATIC_URL):
                     path = url.replace(settings.STATIC_URL, settings.STATIC_ROOT, 1)
-                elif url.startswith(settings.MEDIA_URL):
+                elif settings.MEDIA_URL and url.startswith(settings.MEDIA_URL):
                     path = url.replace(settings.MEDIA_URL, settings.MEDIA_ROOT, 1)
                 # Add more replacements, if necessary...
                 else:
