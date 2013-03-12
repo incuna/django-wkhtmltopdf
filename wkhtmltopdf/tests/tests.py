@@ -4,14 +4,15 @@ from __future__ import absolute_import
 
 import os
 import sys
+from tempfile import gettempdir
 
 from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
 
 from wkhtmltopdf.subprocess import CalledProcessError
-from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
-    wkhtmltopdf)
+from wkhtmltopdf.utils import (_options_to_args, override_settings,
+    pathname2fileurl, wkhtmltopdf)
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
@@ -33,6 +34,56 @@ class TestUtils(TestCase):
                           '--heart', u'♥',
                           '--verbose'])
 
+    def test_pathname2fileurl(self):
+        self.assertEqual(pathname2fileurl('/'),
+                         'file:///')
+        self.assertEqual(pathname2fileurl('/invalid.txt'),
+                         'file:///invalid.txt')
+        self.assertEqual(pathname2fileurl('invalid.txt'),
+                         'file:///invalid.txt')
+
+        # Empty filenames are meaningless
+        self.assertRaises(ValueError, pathname2fileurl, '')
+        self.assertRaises(ValueError, pathname2fileurl, None)
+
+        # Directories have slashes at the end
+        tempdir = gettempdir()
+        self.assertEqual(pathname2fileurl(tempdir),
+                         'file://{0}/'.format(tempdir))
+        # Slashes are preserved
+        self.assertEqual(pathname2fileurl(os.path.join(tempdir, 'invalid', '')),
+                         'file://{0}/invalid/'.format(tempdir))
+        # Regular files don't get slashes
+        self.assertEqual(pathname2fileurl(os.path.join(tempdir, 'invalid.txt')),
+                         'file://{0}/invalid.txt'.format(tempdir))
+
+        # Pathnames are canonicalized
+        self.assertEqual(pathname2fileurl('/foo//bar///baz/'),
+                         'file:///foo/bar/baz/')
+        self.assertEqual(pathname2fileurl('/foo/bar/../baz/'),
+                         'file:///foo/baz/')
+        self.assertEqual(pathname2fileurl('/foo/../../../'),
+                         'file:///')
+
+        # Pathnames that are actually URLs are untouched
+        self.assertEqual(pathname2fileurl('http://example.com/'),
+                         'http://example.com/')
+        self.assertEqual(pathname2fileurl('file://{0}'.format(tempdir)),
+                         'file://{0}'.format(tempdir))
+
+        # Unless we set ignore_url=False
+        self.assertEqual(pathname2fileurl('http://example.com/',
+                                          ignore_url=False),
+                         'file:///http%3A//example.com/')
+
+        # Unicode
+        self.assertEqual(pathname2fileurl(u'♥.txt'), 'file:///%E2%99%A5.txt')
+
+        # We really do ignore Unicode URLs. If that is a general problem, we
+        # can solve it later.
+        self.assertEqual(pathname2fileurl(u'http://example.com/♥.txt'),
+                         u'http://example.com/♥.txt')
+
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
         title = 'A test template.'
@@ -48,7 +99,8 @@ class TestUtils(TestCase):
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Unicode
-            pdf_output = wkhtmltopdf(pages=[temp_file.name], title=u'♥')
+            pdf_output = wkhtmltopdf(pages=[temp_file.name],
+                                     cmd_args=['--title', u'♥'])
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Invalid arguments
@@ -134,63 +186,113 @@ class TestViews(TestCase):
 
     def test_pdf_template_response(self, show_content=False):
         """Test PDFTemplateResponse."""
+        # Override settings here to allow tests to run within another Django
+        # project.
+        with override_settings(
+            MEDIA_URL='/media/',
+            MEDIA_ROOT='/tmp/media/',
+            STATIC_URL='/static/',
+            STATIC_ROOT='/tmp/static/',
+            TEMPLATE_CONTEXT_PROCESSORS=[
+                'django.core.context_processors.media',
+                'django.core.context_processors.static',
+            ],
+            TEMPLATE_LOADERS=['django.template.loaders.filesystem.Loader'],
+            TEMPLATE_DIRS=[os.path.join(os.path.dirname(__file__),
+                                        '_testproject', 'templates')],
+            WKHTMLTOPDF_DEBUG=False,
+        ):
+            context = {'title': 'Heading'}
+            request = RequestFactory().get('/')
+            response = PDFTemplateResponse(request=request,
+                                           template=self.template,
+                                           context=context,
+                                           show_content_in_browser=show_content)
+            self.assertEqual(response._request, request)
+            self.assertEqual(response.template_name, self.template)
+            self.assertEqual(response.context_data, context)
+            self.assertEqual(response.filename, None)
+            self.assertEqual(response.header_template, None)
+            self.assertEqual(response.footer_template, None)
+            self.assertEqual(response.cmd_args, [])
+            self.assertFalse(response.has_header('Content-Disposition'))
 
-        context = {'title': 'Heading'}
-        request = RequestFactory().get('/')
-        response = PDFTemplateResponse(request=request,
-                                       template=self.template,
-                                       context=context,
-                                       show_content_in_browser=show_content)
-        self.assertEqual(response._request, request)
-        self.assertEqual(response.template_name, self.template)
-        self.assertEqual(response.context_data, context)
-        self.assertEqual(response.filename, None)
-        self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, None)
-        self.assertEqual(response.cmd_options, {})
-        self.assertFalse(response.has_header('Content-Disposition'))
+            # Render to temporary file
+            tempfile = response.render_to_temporary_file(self.template)
+            tempfile.seek(0)
+            html_content = tempfile.read()
+            self.assertTrue(html_content.startswith('<html>'))
+            self.assertTrue('<h1>{title}</h1>'.format(**context)
+                            in html_content)
 
-        # Render to temporary file
-        tempfile = response.render_to_temporary_file(self.template)
-        tempfile.seek(0)
-        html_content = tempfile.read()
-        self.assertTrue(html_content.startswith('<html>'))
-        self.assertTrue('<h1>{title}</h1>'.format(**context)
-                        in html_content)
+            pdf_content = response.rendered_content
+            self.assertTrue(pdf_content.startswith('%PDF-'))
+            self.assertTrue(pdf_content.endswith('%%EOF\n'))
 
-        pdf_content = response.rendered_content
-        self.assertTrue(pdf_content.startswith('%PDF-'))
-        self.assertTrue(pdf_content.endswith('%%EOF\n'))
+            # Footer
+            cmd_args = ['--title', 'Test PDF']
+            response = PDFTemplateResponse(request=request,
+                                           template=self.template,
+                                           context=context,
+                                           filename=self.pdf_filename,
+                                           show_content_in_browser=show_content,
+                                           footer_template=self.footer_template,
+                                           cmd_args=cmd_args)
+            self.assertEqual(response.filename, self.pdf_filename)
+            self.assertEqual(response.header_template, None)
+            self.assertEqual(response.footer_template, self.footer_template)
+            self.assertEqual(response.cmd_args, cmd_args)
+            self.assertTrue(response.has_header('Content-Disposition'))
 
-        # Footer
-        cmd_options = {'title': 'Test PDF'}
-        response = PDFTemplateResponse(request=request,
-                                       template=self.template,
-                                       context=context,
-                                       filename=self.pdf_filename,
-                                       show_content_in_browser=show_content,
-                                       footer_template=self.footer_template,
-                                       cmd_options=cmd_options)
-        self.assertEqual(response.filename, self.pdf_filename)
-        self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, self.footer_template)
-        self.assertEqual(response.cmd_options, cmd_options)
-        self.assertTrue(response.has_header('Content-Disposition'))
+            tempfile = response.render_to_temporary_file(self.footer_template)
+            tempfile.seek(0)
+            footer_content = tempfile.read()
 
-        tempfile = response.render_to_temporary_file(self.footer_template)
-        tempfile.seek(0)
-        footer_content = tempfile.read()
-        footer_content = make_absolute_paths(footer_content)
+            media_url = 'file://{0}'.format(settings.MEDIA_ROOT)
+            self.assertTrue(
+                media_url in footer_content,
+                "{0!r} not in {1!r}".format(media_url, footer_content)
+            )
 
-        media_url = 'file://{0}/'.format(settings.MEDIA_ROOT)
-        self.assertTrue(media_url in footer_content, True)
+            # Non-URLs should not be replaced by accident.
+            media_url = '/media/sample_image_not_existing.png does not exist'
+            self.assertTrue(
+                media_url in footer_content,
+                "{0!r} not in {1!r}".format(media_url, footer_content)
+            )
 
-        static_url = 'file://{0}/'.format(settings.STATIC_ROOT)
-        self.assertTrue(static_url in footer_content, True)
+            static_url = 'file://{0}'.format(settings.STATIC_ROOT)
+            self.assertTrue(
+                static_url in footer_content,
+                "{0!r} not in {1!r}".format(static_url, footer_content)
+            )
 
-        pdf_content = response.rendered_content
-        self.assertTrue('\0'.join('{title}'.format(**cmd_options))
-                        in pdf_content)
+            pdf_content = response.rendered_content
+            self.assertTrue('\0'.join('{title}'.format(title=cmd_args[1]))
+                            in pdf_content)
+
+            # Override settings
+            response = PDFTemplateResponse(request=request,
+                                           template=self.template,
+                                           context=context,
+                                           filename=self.pdf_filename,
+                                           footer_template=self.footer_template,
+                                           cmd_args=cmd_args,
+                                           override_settings={
+                                               'STATIC_URL': 'file:///tmp/s/'
+                                           })
+            tempfile = response.render_to_temporary_file(self.footer_template)
+            tempfile.seek(0)
+            footer_content = tempfile.read()
+
+            static_url = '{0}sample_js_not_existing.js'.format('file:///tmp/s/')
+            self.assertTrue(
+                static_url in footer_content,
+                "{0!r} not in {1!r}".format(static_url, footer_content)
+            )
+
+            # Settings were not changed, only context variables
+            self.assertEqual(settings.STATIC_URL, '/static/')
 
     def test_pdf_template_response_to_browser(self):
         self.test_pdf_template_response(show_content=True)
@@ -260,20 +362,20 @@ class TestViews(TestCase):
     def test_pdf_template_view_unicode_to_browser(self):
         self.test_pdf_template_view_unicode(show_content=True)
 
-    def test_get_cmd_options(self):
-        # Default cmd_options
+    def test_get_cmd_args(self):
+        # Default cmd_args
         view = PDFTemplateView()
-        self.assertEqual(view.cmd_options, PDFTemplateView.cmd_options)
-        self.assertEqual(PDFTemplateView.cmd_options, {})
+        self.assertEqual(view.cmd_args, PDFTemplateView.cmd_args)
+        self.assertEqual(PDFTemplateView.cmd_args, [])
 
-        # Instantiate with new cmd_options
-        cmd_options = {'orientation': 'landscape'}
-        view = PDFTemplateView(cmd_options=cmd_options)
-        self.assertEqual(view.cmd_options, cmd_options)
-        self.assertEqual(PDFTemplateView.cmd_options, {})
+        # Instantiate with new cmd_args
+        cmd_args = ['--orientation', 'landscape']
+        view = PDFTemplateView(cmd_args=cmd_args)
+        self.assertEqual(view.cmd_args, cmd_args)
+        self.assertEqual(PDFTemplateView.cmd_args, [])
 
-        # Update local instance of cmd_options
+        # Update local instance of cmd_args
         view = PDFTemplateView()
-        view.cmd_options.update(cmd_options)
-        self.assertEqual(view.cmd_options, cmd_options)
-        self.assertEqual(PDFTemplateView.cmd_options, {})
+        view.cmd_args.extend(cmd_args)
+        self.assertEqual(view.cmd_args, cmd_args)
+        self.assertEqual(PDFTemplateView.cmd_args, [])
