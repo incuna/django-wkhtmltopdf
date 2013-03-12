@@ -64,22 +64,23 @@ def wkhtmltopdf(pages, output=None, cmd_args=None, **kwargs):
 
     cmd_args = list(cmd_args) if cmd_args is not None else []
 
+    # Default arguments:
+    cmd_args = getattr(settings, 'WKHTMLTOPDF_CMD_ARGS', ['--quiet']) + cmd_args
+
     # Parse out deprecated settings variable and arguments
     if kwargs:
         warn('Call wkhtmltopdf with cmd_args instead of calling with **kwargs',
              RuntimeWarning, 2)
         return
+
     options = getattr(settings, 'WKHTMLTOPDF_CMD_OPTIONS', None)
     if options is not None:
         warn('Set WKHTMLTOPDF_CMD_ARGS instead of WKHTMLTOPDF_CMD_OPTIONS',
              RuntimeWarning)
-        kwargs.update(**kwargs)
+        for k, v in options:
+            kwargs.setdefault(k, v)
     if kwargs:
-        cmd_args.extend(_options_to_args(**options))
-
-    # Default arguments:
-    if not cmd_args:
-        cmd_args.extend(getattr(settings, 'WKHTMLTOPDF_CMD_ARGS', ['--quiet']))
+        cmd_args.extend(_options_to_args(**kwargs))
 
     # Force --encoding utf8 unless the user has explicitly overridden this.
     if '--encoding' not in cmd_args:

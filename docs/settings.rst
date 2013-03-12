@@ -21,12 +21,12 @@ this app will look for the binary using the default OS paths.
 .. _WKHTMLTOPDF-CMD-ARGS:
 
 WKHTMLTOPDF_CMD_ARGS
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 Default: ``['--encoding', 'utf8', '--quiet']``
 
-A list of command-line arguments to pass to the ``wkhtmltopdf``
-binary.
+A default list of command-line arguments
+to pass to the ``wkhtmltopdf`` binary.
 
 To pass a simple flag,
 for example:
@@ -43,6 +43,17 @@ for example:
 .. code-block:: python
 
     WKHTMLTOPDF_CMD_ARGS = ['--title', 'TPS Report']
+
+.. note::
+
+    Since you may pass multiple options to ``wkhtmltopdf``,
+    these default arguments are always passed in when it is run.
+    If you want full control over the arguments used, make sure
+    to pass in an empty list:
+
+    .. code-block:: python
+
+        WKHTMLTOPDF_CMD_ARGS = []
 
 
 WKHTMLTOPDF_DEBUG
