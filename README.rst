@@ -39,11 +39,12 @@ e.g.: in ``settings.py``::
     WKHTMLTOPDF_CMD = '/path/to/my/wkhtmltopdf'
 
 You may also set
-``WKHTMLTOPDF_CMD_OPTIONS``
-in ``settings.py`` to a dictionary of default command-line options.
+``WKHTMLTOPDF_CMD_ARGS``
+in ``settings.py`` to a list of default command-line options.
 
 The default is::
 
-    WKHTMLTOPDF_CMD_OPTIONS = {
-        'quiet': True,
-    }
+    WKHTMLTOPDF_CMD_ARGS = [
+        '--encoding', 'utf8',
+        '--quiet',
+    ]

@@ -99,7 +99,8 @@ class TestUtils(TestCase):
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Unicode
-            pdf_output = wkhtmltopdf(pages=[temp_file.name], title=u'♥')
+            pdf_output = wkhtmltopdf(pages=[temp_file.name],
+                                     cmd_args=['--title', u'♥'])
             self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
 
             # Invalid arguments
@@ -213,7 +214,7 @@ class TestViews(TestCase):
             self.assertEqual(response.filename, None)
             self.assertEqual(response.header_template, None)
             self.assertEqual(response.footer_template, None)
-            self.assertEqual(response.cmd_options, {})
+            self.assertEqual(response.cmd_args, [])
             self.assertFalse(response.has_header('Content-Disposition'))
 
             # Render to temporary file
@@ -229,18 +230,18 @@ class TestViews(TestCase):
             self.assertTrue(pdf_content.endswith('%%EOF\n'))
 
             # Footer
-            cmd_options = {'title': 'Test PDF'}
+            cmd_args = ['--title', 'Test PDF']
             response = PDFTemplateResponse(request=request,
                                            template=self.template,
                                            context=context,
                                            filename=self.pdf_filename,
                                            show_content_in_browser=show_content,
                                            footer_template=self.footer_template,
-                                           cmd_options=cmd_options)
+                                           cmd_args=cmd_args)
             self.assertEqual(response.filename, self.pdf_filename)
             self.assertEqual(response.header_template, None)
             self.assertEqual(response.footer_template, self.footer_template)
-            self.assertEqual(response.cmd_options, cmd_options)
+            self.assertEqual(response.cmd_args, cmd_args)
             self.assertTrue(response.has_header('Content-Disposition'))
 
             tempfile = response.render_to_temporary_file(self.footer_template)
@@ -267,7 +268,7 @@ class TestViews(TestCase):
             )
 
             pdf_content = response.rendered_content
-            self.assertTrue('\0'.join('{title}'.format(**cmd_options))
+            self.assertTrue('\0'.join('{title}'.format(title=cmd_args[1]))
                             in pdf_content)
 
             # Override settings
@@ -276,7 +277,7 @@ class TestViews(TestCase):
                                            context=context,
                                            filename=self.pdf_filename,
                                            footer_template=self.footer_template,
-                                           cmd_options=cmd_options,
+                                           cmd_args=cmd_args,
                                            override_settings={
                                                'STATIC_URL': 'file:///tmp/s/'
                                            })
@@ -361,20 +362,20 @@ class TestViews(TestCase):
     def test_pdf_template_view_unicode_to_browser(self):
         self.test_pdf_template_view_unicode(show_content=True)
 
-    def test_get_cmd_options(self):
-        # Default cmd_options
+    def test_get_cmd_args(self):
+        # Default cmd_args
         view = PDFTemplateView()
-        self.assertEqual(view.cmd_options, PDFTemplateView.cmd_options)
-        self.assertEqual(PDFTemplateView.cmd_options, {})
+        self.assertEqual(view.cmd_args, PDFTemplateView.cmd_args)
+        self.assertEqual(PDFTemplateView.cmd_args, [])
 
-        # Instantiate with new cmd_options
-        cmd_options = {'orientation': 'landscape'}
-        view = PDFTemplateView(cmd_options=cmd_options)
-        self.assertEqual(view.cmd_options, cmd_options)
-        self.assertEqual(PDFTemplateView.cmd_options, {})
+        # Instantiate with new cmd_args
+        cmd_args = ['--orientation', 'landscape']
+        view = PDFTemplateView(cmd_args=cmd_args)
+        self.assertEqual(view.cmd_args, cmd_args)
+        self.assertEqual(PDFTemplateView.cmd_args, [])
 
-        # Update local instance of cmd_options
+        # Update local instance of cmd_args
         view = PDFTemplateView()
-        view.cmd_options.update(cmd_options)
-        self.assertEqual(view.cmd_options, cmd_options)
-        self.assertEqual(PDFTemplateView.cmd_options, {})
+        view.cmd_args.extend(cmd_args)
+        self.assertEqual(view.cmd_args, cmd_args)
+        self.assertEqual(PDFTemplateView.cmd_args, [])

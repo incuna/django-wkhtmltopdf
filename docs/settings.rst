@@ -18,14 +18,15 @@ The name of the ``wkhtmltopdf`` binary.
 If there are no path components,
 this app will look for the binary using the default OS paths.
 
-WKHTMLTOPDF_CMD_OPTIONS
+.. _WKHTMLTOPDF-CMD-ARGS:
+
+WKHTMLTOPDF_CMD_ARGS
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Default: ``{'encoding': 'utf8', 'quiet': True}``
+Default: ``['--encoding', 'utf8', '--quiet']``
 
-A dictionary of command-line arguments to pass to the ``wkhtmltopdf``
+A list of command-line arguments to pass to the ``wkhtmltopdf``
 binary.
-Keys are the name of the flag and values are arguments for the flag.
 
 To pass a simple flag,
 for example:
@@ -33,7 +34,7 @@ for example:
 
 .. code-block:: python
 
-    WKHTMLTOPDF_CMD_OPTIONS = {'disable-javascript': True}
+    WKHTMLTOPDF_CMD_ARGS = ['--disable-javascript']
 
 To pass a flag with an argument,
 for example:
@@ -41,7 +42,7 @@ for example:
 
 .. code-block:: python
 
-    WKHTMLTOPDF_CMD_OPTIONS = {'title': 'TPS Report'}
+    WKHTMLTOPDF_CMD_ARGS = ['--title', 'TPS Report']
 
 
 WKHTMLTOPDF_DEBUG

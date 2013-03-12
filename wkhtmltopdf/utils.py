@@ -8,6 +8,7 @@ import re
 import sys
 import urllib
 import urlparse
+from warnings import warn
 
 from django.conf import settings
 
@@ -17,8 +18,10 @@ from .subprocess import check_output
 has_scheme = re.compile(r'^[^:/]+://')
 
 
+# DEPRECATED: Remove when WKHTMLTOPDF_CMD_OPTIONS support is removed.
 def _options_to_args(**options):
     """Converts ``options`` into a list of command-line arguments."""
+    warn('_options_to-args() is deprecated', DeprecationWarning)
     flags = []
     for name in sorted(options):
         value = options[name]
@@ -30,36 +33,27 @@ def _options_to_args(**options):
     return flags
 
 
-def wkhtmltopdf(pages, output=None, **kwargs):
+def wkhtmltopdf(pages, output=None, cmd_args=None, **kwargs):
     """
     Converts html to PDF using http://code.google.com/p/wkhtmltopdf/.
 
     pages: List of file paths or URLs of the html to be converted.
     output: Optional output file path. If None, the output is returned.
-    **kwargs: Passed to wkhtmltopdf via _extra_args() (See
+    cmd_args: List of additional command-line arguments for wkhtmltopdf.
+              (See
               https://github.com/antialize/wkhtmltopdf/blob/master/README_WKHTMLTOPDF
               for acceptable args.)
-              Kwargs is passed through as arguments. e.g.:
-                  {'footer_html': 'http://example.com/foot.html'}
-              becomes
-                  '--footer-html http://example.com/foot.html'
-
-              Where there is no value passed, use True. e.g.:
-                  {'disable_javascript': True}
-              becomes:
-                  '--disable-javascript'
-
-              To disable a default option, use None. e.g:
-                  {'quiet': None'}
-              becomes:
-                  ''
 
     example usage:
         wkhtmltopdf(pages=['/tmp/example.html'],
-                    dpi=300,
-                    orientation='Landscape',
-                    disable_javascript=True)
+                    cmd_args=['--dpi', '300',
+                              '--orientation', 'Landscape',
+                              '--disable-javascript']
     """
+    if cmd_args is not None and kwargs:
+        raise ValueError('Cannot mix cmd_args and **kwargs. '
+                         '**kwargs is deprecated, use cmd_args instead.')
+
     if isinstance(pages, basestring):
         # Support a single page.
         pages = [pages]
@@ -68,16 +62,28 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         # Standard output.
         output = '-'
 
-    # Default options:
+    cmd_args = list(cmd_args) if cmd_args is not None else []
+
+    # Parse out deprecated settings variable and arguments
+    if kwargs:
+        warn('Call wkhtmltopdf with cmd_args instead of calling with **kwargs',
+             RuntimeWarning, 2)
+        return
     options = getattr(settings, 'WKHTMLTOPDF_CMD_OPTIONS', None)
-    if options is None:
-        options = {'quiet': True}
-    else:
-        options = copy(options)
-    options.update(kwargs)
+    if options is not None:
+        warn('Set WKHTMLTOPDF_CMD_ARGS instead of WKHTMLTOPDF_CMD_OPTIONS',
+             RuntimeWarning)
+        kwargs.update(**kwargs)
+    if kwargs:
+        cmd_args.extend(_options_to_args(**options))
+
+    # Default arguments:
+    if not cmd_args:
+        cmd_args.extend(getattr(settings, 'WKHTMLTOPDF_CMD_ARGS', ['--quiet']))
 
     # Force --encoding utf8 unless the user has explicitly overridden this.
-    options.setdefault('encoding', 'utf8')
+    if '--encoding' not in cmd_args:
+        cmd_args.extend(['--encoding', 'utf8'])
 
     env = getattr(settings, 'WKHTMLTOPDF_ENV', None)
     if env is not None:
@@ -85,7 +91,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     cmd = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
     args = list(chain([cmd],
-                      _options_to_args(**options),
+                      cmd_args,
                       list(pages),
                       [output]))
     return check_output(args, stderr=sys.stderr, env=env)

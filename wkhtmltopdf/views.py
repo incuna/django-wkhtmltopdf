@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from tempfile import NamedTemporaryFile
+from warnings import warn
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -53,7 +54,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                  status=None, content_type=None, current_app=None,
                  filename=None, show_content_in_browser=None,
                  header_template=None, footer_template=None,
-                 cmd_options=None, override_settings=None, *args, **kwargs):
+                 cmd_args=None, override_settings=None, *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
@@ -68,9 +69,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         self.header_template = header_template
         self.footer_template = footer_template
 
-        if cmd_options is None:
-            cmd_options = {}
-        self.cmd_options = cmd_options
+        if cmd_args is None:
+            cmd_args = []
+        self.cmd_args = cmd_args
 
         self.override_settings = override_settings
 
@@ -106,15 +107,28 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 
     def convert_to_pdf(self, filename,
                        header_filename=None, footer_filename=None):
-        cmd_options = self.cmd_options.copy()
+        if hasattr(self, 'cmd_options'):
+            raise ValueError('{0}.cmd_options is deprecated, '
+                             'use cmd_args instead'.format(self.__class__))
+
+        cmd_args = self.cmd_args[:]
+
         # Clobber header_html and footer_html only if filenames are
-        # provided. These keys may be in self.cmd_options as hardcoded
+        # provided. These keys may be in self.cmd_args as hardcoded
         # static files.
         if header_filename is not None:
-            cmd_options['header_html'] = header_filename
+            if '--header-html' not in cmd_args:
+                cmd_args.extend(['--header-html', header_filename])
+            else:
+                index = cmd_args.index('--header_html')
+                cmd_args[index + 1] = header_filename
         if footer_filename is not None:
-            cmd_options['footer_html'] = footer_filename
-        return wkhtmltopdf(pages=[filename], **cmd_options)
+            if '--footer-html' not in cmd_args:
+                cmd_args.extend(['--footer-html', footer_filename])
+            else:
+                index = cmd_args.index('--footer_html')
+                cmd_args[index + 1] = footer_filename
+        return wkhtmltopdf(pages=[filename], cmd_args=cmd_args)
 
     @property
     def rendered_content(self):
@@ -205,17 +219,17 @@ class PDFTemplateView(TemplateView):
     html_response_class = TemplateResponse
 
     # Command-line options to pass to wkhtmltopdf
-    cmd_options = {
-        # 'orientation': 'portrait',
-        # 'collate': True,
-        # 'quiet': None,
-    }
+    cmd_args = [
+        # '--orientation', 'portrait',
+        # '--collate',
+        # '--quiet',
+    ]
 
     def __init__(self, *args, **kwargs):
         super(PDFTemplateView, self).__init__(*args, **kwargs)
 
-        # Copy self.cmd_options to prevent clobbering the class-level object.
-        self.cmd_options = self.cmd_options.copy()
+        # Copy self.cmd_args to prevent clobbering the class-level object.
+        self.cmd_args = self.cmd_args[:]
 
     def get(self, request, *args, **kwargs):
         response_class = self.response_class
@@ -232,30 +246,30 @@ class PDFTemplateView(TemplateView):
     def get_filename(self):
         return self.filename
 
-    def get_cmd_options(self):
-        return self.cmd_options
+    def get_cmd_args(self):
+        return self.cmd_args
 
     def render_to_response(self, context, **response_kwargs):
         """
         Returns a PDF response with a template rendered with the given context.
         """
         filename = response_kwargs.pop('filename', None)
-        cmd_options = response_kwargs.pop('cmd_options', None)
+        cmd_args = response_kwargs.pop('cmd_args', None)
         override_settings = response_kwargs.pop('override_settings', None)
 
         if issubclass(self.response_class, PDFTemplateResponse):
             if filename is None:
                 filename = self.get_filename()
 
-            if cmd_options is None:
-                cmd_options = self.get_cmd_options()
+            if cmd_args is None:
+                cmd_args = self.get_cmd_args()
 
             return super(PDFTemplateView, self).render_to_response(
                 context=context, filename=filename,
                 show_content_in_browser=self.show_content_in_browser,
                 header_template=self.header_template,
                 footer_template=self.footer_template,
-                cmd_options=cmd_options, override_settings=override_settings,
+                cmd_args=cmd_args, override_settings=override_settings,
                 **response_kwargs
             )
         else:

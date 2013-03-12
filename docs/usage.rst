@@ -36,10 +36,10 @@ It accepts the following class attributes:
     See note below.
     Default is :py:class:`TemplateResponse`.
 
-:py:attr:`cmd_options`
-    The dictionary of command-line arguments passed to the underlying
+:py:attr:`cmd_args`
+    The list of command-line arguments passed to the underlying
     ``wkhtmltopdf`` binary.
-    Default is ``{}``.
+    Default is controlled by :ref:`WKHTMLTOPDF-CMD-ARGS`.
 
     wkhtmltopdf options can be found by running ``wkhtmltopdf --help``.
     Unfortunately they don't provide hosted documentation.
@@ -86,9 +86,10 @@ and override the sections you need to.
     class MyPDF(PDFTemplateView):
         filename = 'my_pdf.pdf'
         template_name = 'my_template.html'
-        cmd_options = {
-            'margin-top': 3,
-        }
+        cmd_args = [
+            '--margin-top', '3',
+            '--quiet',
+        ]
 
 
 Templates
