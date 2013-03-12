@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import os
 import sys
+from tempfile import gettempdir
 
 from django.conf import settings
 from django.test import TestCase
@@ -11,7 +12,7 @@ from django.test.client import RequestFactory
 
 from wkhtmltopdf.subprocess import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, override_settings,
-    wkhtmltopdf)
+    pathname2fileurl, wkhtmltopdf)
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
@@ -32,6 +33,56 @@ class TestUtils(TestCase):
                          ['--file-name', 'file-name',
                           '--heart', u'♥',
                           '--verbose'])
+
+    def test_pathname2fileurl(self):
+        self.assertEqual(pathname2fileurl('/'),
+                         'file:///')
+        self.assertEqual(pathname2fileurl('/invalid.txt'),
+                         'file:///invalid.txt')
+        self.assertEqual(pathname2fileurl('invalid.txt'),
+                         'file:///invalid.txt')
+
+        # Empty filenames are meaningless
+        self.assertRaises(ValueError, pathname2fileurl, '')
+        self.assertRaises(ValueError, pathname2fileurl, None)
+
+        # Directories have slashes at the end
+        tempdir = gettempdir()
+        self.assertEqual(pathname2fileurl(tempdir),
+                         'file://{0}/'.format(tempdir))
+        # Slashes are preserved
+        self.assertEqual(pathname2fileurl(os.path.join(tempdir, 'invalid', '')),
+                         'file://{0}/invalid/'.format(tempdir))
+        # Regular files don't get slashes
+        self.assertEqual(pathname2fileurl(os.path.join(tempdir, 'invalid.txt')),
+                         'file://{0}/invalid.txt'.format(tempdir))
+
+        # Pathnames are canonicalized
+        self.assertEqual(pathname2fileurl('/foo//bar///baz/'),
+                         'file:///foo/bar/baz/')
+        self.assertEqual(pathname2fileurl('/foo/bar/../baz/'),
+                         'file:///foo/baz/')
+        self.assertEqual(pathname2fileurl('/foo/../../../'),
+                         'file:///')
+
+        # Pathnames that are actually URLs are untouched
+        self.assertEqual(pathname2fileurl('http://example.com/'),
+                         'http://example.com/')
+        self.assertEqual(pathname2fileurl('file://{0}'.format(tempdir)),
+                         'file://{0}'.format(tempdir))
+
+        # Unless we set ignore_url=False
+        self.assertEqual(pathname2fileurl('http://example.com/',
+                                          ignore_url=False),
+                         'file:///http%3A//example.com/')
+
+        # Unicode
+        self.assertEqual(pathname2fileurl(u'♥.txt'), 'file:///%E2%99%A5.txt')
+
+        # We really do ignore Unicode URLs. If that is a general problem, we
+        # can solve it later.
+        self.assertEqual(pathname2fileurl(u'http://example.com/♥.txt'),
+                         u'http://example.com/♥.txt')
 
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
@@ -138,9 +189,9 @@ class TestViews(TestCase):
         # project.
         with override_settings(
             MEDIA_URL='/media/',
-            MEDIA_ROOT='/tmp/media',
+            MEDIA_ROOT='/tmp/media/',
             STATIC_URL='/static/',
-            STATIC_ROOT='/tmp/static',
+            STATIC_ROOT='/tmp/static/',
             TEMPLATE_CONTEXT_PROCESSORS=[
                 'django.core.context_processors.media',
                 'django.core.context_processors.static',
@@ -196,7 +247,7 @@ class TestViews(TestCase):
             tempfile.seek(0)
             footer_content = tempfile.read()
 
-            media_url = 'file://{0}/'.format(settings.MEDIA_ROOT)
+            media_url = 'file://{0}'.format(settings.MEDIA_ROOT)
             self.assertTrue(
                 media_url in footer_content,
                 "{0!r} not in {1!r}".format(media_url, footer_content)
@@ -209,7 +260,7 @@ class TestViews(TestCase):
                 "{0!r} not in {1!r}".format(media_url, footer_content)
             )
 
-            static_url = 'file://{0}/'.format(settings.STATIC_ROOT)
+            static_url = 'file://{0}'.format(settings.STATIC_ROOT)
             self.assertTrue(
                 static_url in footer_content,
                 "{0!r} not in {1!r}".format(static_url, footer_content)
@@ -238,6 +289,8 @@ class TestViews(TestCase):
                 static_url in footer_content,
                 "{0!r} not in {1!r}".format(static_url, footer_content)
             )
+
+            # Settings were not changed, only context variables
             self.assertEqual(settings.STATIC_URL, '/static/')
 
     def test_pdf_template_response_to_browser(self):

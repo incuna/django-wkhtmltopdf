@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-import re
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
@@ -45,6 +44,11 @@ class PDFResponse(HttpResponse):
 class PDFTemplateResponse(TemplateResponse, PDFResponse):
     """Renders a Template into a PDF using wkhtmltopdf"""
 
+    default_override_settings = {
+        'MEDIA_URL': (lambda k: pathname2fileurl(settings.MEDIA_ROOT)),
+        'STATIC_URL': (lambda k: pathname2fileurl(settings.STATIC_ROOT)),
+    }
+
     def __init__(self, request, template, context=None, mimetype=None,
                  status=None, content_type=None, current_app=None,
                  filename=None, show_content_in_browser=None,
@@ -84,6 +88,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         with override_settings(**self.get_override_settings()):
             context = self.resolve_context(self.context_data)
             content = smart_str(template.render(context))
+            content = smart_str(self.pre_render(content=content,
+                                                 template_name=template_name,
+                                                 context=context))
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
@@ -156,28 +163,27 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 
     def get_override_settings(self):
         """Returns a dictionary of settings to override for response_class"""
-        overrides = {
-            'MEDIA_ROOT': settings.MEDIA_ROOT,
-            'MEDIA_URL': settings.MEDIA_URL,
-            'STATIC_ROOT': settings.STATIC_ROOT,
-            'STATIC_URL': settings.STATIC_URL,
-        }
+        overrides = self.default_override_settings.copy()
         if self.override_settings is not None:
             overrides.update(self.override_settings)
 
-        has_scheme = re.compile(r'^[^:/]+://')
-
-        # If MEDIA_URL doesn't have a scheme, we transform it into a
-        # file:// URL based on MEDIA_ROOT.
-        urls = [('MEDIA_URL', 'MEDIA_ROOT'),
-                ('STATIC_URL', 'STATIC_ROOT')]
-        for url, root in urls:
-            if not has_scheme.match(overrides[url]):
-                overrides[url] = pathname2fileurl(overrides[root])
-                if not overrides[url].endswith('/'):
-                    overrides[url] += '/'
+        for name, value in overrides.iteritems():
+            # This is safe, because we are not changing the keys
+            if callable(value):
+                value = value(name)
+            overrides[name] = value
 
         return overrides
+
+    def pre_render(self, content, template_name, context):
+        """Returns post-processed HTML `content` to render as PDF.
+
+        `template_name` generated HTML using `context`.
+
+        Overload this method if you need to manipulate the HTML before it
+        is rendered to PDF.
+        """
+        return content
 
 
 class PDFTemplateView(TemplateView):

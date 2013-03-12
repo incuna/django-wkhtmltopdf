@@ -4,13 +4,17 @@ from copy import copy
 from functools import wraps
 from itertools import chain
 import os
+import re
 import sys
 import urllib
-from urlparse import urljoin
+import urlparse
 
 from django.conf import settings
 
 from .subprocess import check_output
+
+
+has_scheme = re.compile(r'^[^:/]+://')
 
 
 def _options_to_args(**options):
@@ -118,9 +122,32 @@ def http_quote(string):
     return '"{0!s}"'.format(string.replace('\\', '\\\\').replace('"', '\\"'))
 
 
-def pathname2fileurl(pathname):
-    """Returns a file:// URL for pathname. Handles OS-specific conversions."""
-    return urljoin('file:', urllib.pathname2url(pathname))
+def pathname2fileurl(pathname, ignore_url=True):
+    """Returns a file:// URL for pathname. Handles OS-specific conversions.
+
+    If ignore_url, any pathnames with a scheme:// prefix will not be
+    modified.
+    """
+    if not pathname:
+        raise ValueError('Invalid pathname: {0!r}'.format(pathname))
+
+    is_url = has_scheme.match(pathname)
+    if ignore_url and is_url:
+        return pathname         # Not a real pathname
+
+    if is_url:
+        normpath = pathname
+    else:
+        # Normalize pathnames by removing junk characters
+        normpath = os.path.normpath(pathname)
+
+        # Ensure directories end with a single slash
+        if (pathname.endswith('/') or os.path.isdir(normpath)) and \
+           not normpath.endswith('/'):
+            normpath += '/'
+
+    return urlparse.urljoin('file:',
+                            urllib.pathname2url(normpath.encode('utf-8')))
 
 
 try:
