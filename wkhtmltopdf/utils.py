@@ -4,7 +4,6 @@ from copy import copy
 from functools import wraps
 from itertools import chain
 import os
-import re
 import sys
 import urllib
 from urlparse import urljoin
@@ -124,35 +123,55 @@ def pathname2fileurl(pathname):
     return urljoin('file:', urllib.pathname2url(pathname))
 
 
-def make_absolute_paths(content):
-    """Convert all MEDIA files into a file://URL paths in order to
-    correctly get it displayed in PDFs."""
+try:
+    # From Django 1.4 and up
+    from django.test.utils import override_settings
+except ImportError:
+    # Copied from Django 1.4 for use in Django 1.3. Remove when Django 1.3 is
+    # deprecated for this package.
+    class override_settings(object):
+        """
+        Acts as either a decorator, or a context manager. If it's a decorator it
+        takes a function and returns a wrapped function. If it's a contextmanager
+        it's used with the ``with`` statement. In either event entering/exiting
+        are called before and after, respectively, the function/block is executed.
+        """
+        def __init__(self, **kwargs):
+            self.options = kwargs
+            self.wrapped = settings._wrapped
 
-    overrides = [
-        {
-            'root': settings.MEDIA_ROOT,
-            'url': settings.MEDIA_URL,
-        },
-        {
-            'root': settings.STATIC_ROOT,
-            'url': settings.STATIC_URL,
-        }
-    ]
-    has_scheme = re.compile(r'^[^:/]+://')
+        def __enter__(self):
+            self.enable()
 
-    for x in overrides:
-        if has_scheme.match(x['url']):
-            continue
+        def __exit__(self, exc_type, exc_value, traceback):
+            self.disable()
 
-        if not x['root'].endswith('/'):
-            x['root'] += '/'
+        def __call__(self, test_func):
+            from django.test import TransactionTestCase
+            if isinstance(test_func, type) and issubclass(test_func, TransactionTestCase):
+                original_pre_setup = test_func._pre_setup
+                original_post_teardown = test_func._post_teardown
+                def _pre_setup(innerself):
+                    self.enable()
+                    original_pre_setup(innerself)
+                def _post_teardown(innerself):
+                    original_post_teardown(innerself)
+                    self.disable()
+                test_func._pre_setup = _pre_setup
+                test_func._post_teardown = _post_teardown
+                return test_func
+            else:
+                @wraps(test_func)
+                def inner(*args, **kwargs):
+                    with self:
+                        return test_func(*args, **kwargs)
+            return inner
 
-        occur_pattern = '''["|']({0}.*?)["|']'''
-        occurences = re.findall(occur_pattern.format(x['url']), content)
-        occurences = list(set(occurences))  # Remove dups
-        for occur in occurences:
-            content = content.replace(occur,
-                                      pathname2fileurl(x['root']) +
-                                      occur[len(x['url']):])
+        def enable(self):
+            override = copy(settings._wrapped)
+            for key, new_value in self.options.items():
+                setattr(override, key, new_value)
+            settings._wrapped = override
 
-    return content
+        def disable(self):
+            settings._wrapped = self.wrapped

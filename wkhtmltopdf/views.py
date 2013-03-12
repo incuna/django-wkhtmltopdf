@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import re
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
@@ -8,8 +9,8 @@ from django.template.response import TemplateResponse
 from django.utils.encoding import smart_str
 from django.views.generic import TemplateView
 
-from .utils import (content_disposition_filename, make_absolute_paths,
-    wkhtmltopdf)
+from .utils import (content_disposition_filename, override_settings,
+                    pathname2fileurl, wkhtmltopdf)
 
 
 class PDFResponse(HttpResponse):
@@ -48,7 +49,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                  status=None, content_type=None, current_app=None,
                  filename=None, show_content_in_browser=None,
                  header_template=None, footer_template=None,
-                 cmd_options=None, *args, **kwargs):
+                 cmd_options=None, override_settings=None, *args, **kwargs):
 
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
@@ -67,20 +68,26 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             cmd_options = {}
         self.cmd_options = cmd_options
 
+        self.override_settings = override_settings
+
     def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
                                  suffix='.html', prefix='tmp', dir=None,
                                  delete=True):
         template = self.resolve_template(template_name)
 
-        context = self.resolve_context(self.context_data)
-
-        content = smart_str(template.render(context))
-        content = make_absolute_paths(content)
+        # Since many things require a sensible settings.MEDIA_URL and
+        # settings.STATIC_URL, including TEMPLATE_CONTEXT_PROCESSORS;
+        # the settings themselves need to be overridden when rendering.
+        #
+        # This allows django-wkhtmltopdf to play nicely with the
+        # staticfiles app, for instance.
+        with override_settings(**self.get_override_settings()):
+            context = self.resolve_context(self.context_data)
+            content = smart_str(template.render(context))
 
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
                                       dir=dir, delete=delete)
-
         try:
             tempfile.write(content)
             tempfile.flush()
@@ -147,6 +154,31 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             for f in filter(None, (input_file, header_file, footer_file)):
                 f.close()
 
+    def get_override_settings(self):
+        """Returns a dictionary of settings to override for response_class"""
+        overrides = {
+            'MEDIA_ROOT': settings.MEDIA_ROOT,
+            'MEDIA_URL': settings.MEDIA_URL,
+            'STATIC_ROOT': settings.STATIC_ROOT,
+            'STATIC_URL': settings.STATIC_URL,
+        }
+        if self.override_settings is not None:
+            overrides.update(self.override_settings)
+
+        has_scheme = re.compile(r'^[^:/]+://')
+
+        # If MEDIA_URL doesn't have a scheme, we transform it into a
+        # file:// URL based on MEDIA_ROOT.
+        urls = [('MEDIA_URL', 'MEDIA_ROOT'),
+                ('STATIC_URL', 'STATIC_ROOT')]
+        for url, root in urls:
+            if not has_scheme.match(overrides[url]):
+                overrides[url] = pathname2fileurl(overrides[root])
+                if not overrides[url].endswith('/'):
+                    overrides[url] += '/'
+
+        return overrides
+
 
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
@@ -203,6 +235,7 @@ class PDFTemplateView(TemplateView):
         """
         filename = response_kwargs.pop('filename', None)
         cmd_options = response_kwargs.pop('cmd_options', None)
+        override_settings = response_kwargs.pop('override_settings', None)
 
         if issubclass(self.response_class, PDFTemplateResponse):
             if filename is None:
@@ -216,7 +249,7 @@ class PDFTemplateView(TemplateView):
                 show_content_in_browser=self.show_content_in_browser,
                 header_template=self.header_template,
                 footer_template=self.footer_template,
-                cmd_options=cmd_options,
+                cmd_options=cmd_options, override_settings=override_settings,
                 **response_kwargs
             )
         else:
