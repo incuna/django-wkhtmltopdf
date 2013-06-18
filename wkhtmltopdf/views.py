@@ -77,12 +77,21 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         content = smart_str(template.render(context))
         content = make_absolute_paths(content)
 
-        tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
+        try:
+            tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
+                                      suffix=suffix, prefix=prefix,
+                                      dir=dir, delete=delete)
+        except TypeError:
+            tempfile = NamedTemporaryFile(mode=mode, buffering=bufsize,
                                       suffix=suffix, prefix=prefix,
                                       dir=dir, delete=delete)
 
         try:
             tempfile.write(content)
+            tempfile.flush()
+            return tempfile
+        except TypeError:
+            tempfile.write(bytes(content, 'UTF-8'))
             tempfile.flush()
             return tempfile
         except:

@@ -7,11 +7,32 @@ import os
 import re
 import sys
 import urllib
-from urlparse import urljoin
+
+try:
+    from urllib.parse import urljoin
+except ImportError:     # Python 2
+    from urlparse import urljoin
 
 from django.conf import settings
 
 from .subprocess import check_output
+
+
+# Taken from https://github.com/oxplot/fysom/issues/1
+try:
+    unicode = unicode
+except NameError:
+    # 'unicode' is undefined, must be Python 3
+    str = str
+    unicode = str
+    bytes = bytes
+    basestring = (str, bytes)
+else:
+    # 'unicode' exists, must be Python 2
+    str = str
+    unicode = unicode
+    bytes = str
+    basestring = basestring
 
 
 def _options_to_args(**options):
@@ -112,16 +133,20 @@ def http_quote(string):
     if isinstance(string, unicode):
         try:
             import unidecode
+
             string = unidecode.unidecode(string)
         except ImportError:
             string = string.encode('ascii', 'replace')
-    # Wrap in double-quotes for ; , and the like
-    return '"{0!s}"'.format(string.replace('\\', '\\\\').replace('"', '\\"'))
+            # Wrap in double-quotes for ; , and the like
+    return '"{0!s}"'.format(string.replace(b'\\', b'\\\\').replace(b'"', b'\\"'))
 
 
 def pathname2fileurl(pathname):
     """Returns a file:// URL for pathname. Handles OS-specific conversions."""
-    return urljoin('file:', urllib.pathname2url(pathname))
+    try:
+        return urljoin('file:', urllib.pathname2url(pathname))
+    except AttributeError:
+        return urljoin('file:', urllib.request.pathname2url(pathname))
 
 
 def make_absolute_paths(content):
