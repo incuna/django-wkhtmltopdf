@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from copy import copy
-from functools import wraps
 from itertools import chain
 import os
 import re
@@ -133,12 +132,13 @@ def http_quote(string):
     if isinstance(string, unicode):
         try:
             import unidecode
-
             string = unidecode.unidecode(string)
         except ImportError:
             string = string.encode('ascii', 'replace')
-            # Wrap in double-quotes for ; , and the like
-    return '"{0!s}"'.format(string.replace(b'\\', b'\\\\').replace(b'"', b'\\"'))
+            if isinstance(string, bytes):
+                string = string.decode('utf8')
+    # Wrap in double-quotes for ; , and the like
+    return '"{0!s}"'.format(string.replace('\\', '\\\\').replace('"', '\\"'))
 
 
 def pathname2fileurl(pathname):
@@ -181,3 +181,4 @@ def make_absolute_paths(content):
                                       occur[len(x['url']):])
 
     return content
+
