@@ -1,6 +1,18 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+1.2.2
+-----
+
+* Fix tests on Travis due to its platform changes.
+* Allow to define WKHTMLTOPDF_CMD as environment variable.
+
+
+1.2.1
+-----
+
+* Test sys.stderr to ensure it hasn't been overridden.
+
 
 1.2
 ---
