@@ -6,4 +6,3 @@ tar xvjf wkhtmltopdf-0.11.0_rc1-static-amd64.tar.bz2
 sudo chown root:root wkhtmltopdf-amd64
 sudo mv wkhtmltopdf-amd64 /usr/bin/wkhtmltopdf
 export WKHTMLTOPDF_CMD=/usr/bin/wkhtmltopdf
-$WKHTMLTOPDF_CMD --version
