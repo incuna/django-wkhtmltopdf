@@ -4,6 +4,8 @@ DEBUG = True
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
 
+SECRET_KEY = 'fooooooo'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

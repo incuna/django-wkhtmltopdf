@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 from copy import copy
-from functools import wraps
 from itertools import chain
 import os
 import re
@@ -80,7 +79,9 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     if env is not None:
         env = dict(os.environ, **env)
 
-    cmd = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
+    cmd = 'WKHTMLTOPDF_CMD'
+    cmd = getattr(settings, cmd, os.environ.get(cmd, 'wkhtmltopdf'))
+
     ck_args = list(chain(cmd.split(),
                          _options_to_args(**options),
                          list(pages),
