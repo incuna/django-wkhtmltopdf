@@ -81,11 +81,14 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         env = dict(os.environ, **env)
 
     cmd = getattr(settings, 'WKHTMLTOPDF_CMD', 'wkhtmltopdf')
-    args = list(chain(cmd.split(),
-                      _options_to_args(**options),
-                      list(pages),
-                      [output]))
-    return check_output(args, stderr=sys.stderr, env=env)
+    ck_args = list(chain(cmd.split(),
+                         _options_to_args(**options),
+                         list(pages),
+                         [output]))
+    ck_kwargs = {'env': env}
+    if hasattr(sys.stderr, 'fileno'):
+        ck_kwargs['stderr'] = sys.stderr
+    return check_output(ck_args, **ck_kwargs)
 
 
 def content_disposition_filename(filename):
