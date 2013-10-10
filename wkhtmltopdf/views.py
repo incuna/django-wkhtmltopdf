@@ -41,6 +41,8 @@ class PDFResponse(HttpResponse):
             del self['Content-Disposition']
 
 
+
+
 class PDFTemplateResponse(TemplateResponse, PDFResponse):
     """Renders a Template into a PDF using wkhtmltopdf"""
 
@@ -148,6 +150,36 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                 f.close()
 
 
+class PngTemplateResponse(PDFTemplateResponse):
+
+    def __init__(self, request, template, context=None, mimetype=None,
+                 status=None, content_type=None, current_app=None,
+                 filename=None, show_content_in_browser=None,
+                 header_template=None, footer_template=None,
+                 cmd_options=None, *args, **kwargs):
+
+        content_type = "image/png"
+        super(PngTemplateResponse, self).__init__(request=request,
+                                                  template=template,
+                                                  context=context,
+                                                  mimetype=mimetype,
+                                                  status=status,
+                                                  content_type=content_type,
+                                                  current_app=None,
+                                                  *args, **kwargs)
+
+
+    @property
+    def rendered_content(self):
+        from wand.image import Image
+        pdf_binary = super(PngTemplateResponse, self).rendered_content
+
+        # Converting first page into JPG
+        with Image(blob=pdf_binary, resolution=300) as img:
+            return img.make_blob(format="png")
+
+        return pdf_binary
+
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
 
@@ -165,6 +197,7 @@ class PDFTemplateView(TemplateView):
     # TemplateResponse classes for PDF and HTML
     response_class = PDFTemplateResponse
     html_response_class = TemplateResponse
+    png_response_class = PngTemplateResponse
 
     # Command-line options to pass to wkhtmltopdf
     cmd_options = {
@@ -185,6 +218,11 @@ class PDFTemplateView(TemplateView):
             if request.GET.get('as', '') == 'html':
                 # Use the html_response_class if HTML was requested.
                 self.response_class = self.html_response_class
+
+            if request.GET.get('as', '') == 'png':
+                # Use the png_response_class if HTML was requested.
+                self.response_class = self.png_response_class
+
             return super(PDFTemplateView, self).get(request,
                                                     *args, **kwargs)
         finally:
