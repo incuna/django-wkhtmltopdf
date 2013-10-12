@@ -162,6 +162,7 @@ class PngTemplateResponse(PDFTemplateResponse):
                  header_template=None, footer_template=None,
                  cmd_options=None, *args, **kwargs):
 
+        self.request = request
         content_type = "image/png"
         super(PngTemplateResponse, self).__init__(request=request,
                                                   template=template,
@@ -171,15 +172,29 @@ class PngTemplateResponse(PDFTemplateResponse):
                                                   content_type=content_type,
                                                   current_app=None,
                                                   *args, **kwargs)
+        #self.set_filename(filename, show_content_in_browser)
 
+        self.header_template = header_template
+        self.footer_template = footer_template
+
+        if cmd_options is None:
+            cmd_options = {}
+        self.cmd_options = cmd_options
 
     @property
     def rendered_content(self):
         from wand.image import Image
         pdf_binary = super(PngTemplateResponse, self).rendered_content
 
-        # Converting first page into JPG
-        with Image(blob=pdf_binary, resolution=300) as img:
+        with Image(blob=pdf_binary, resolution=(300,300)) as img:
+
+            width = self.request.GET.get('width', None)
+            height = self.request.GET.get('height', None)
+
+            if width and height:
+
+                img.resize(int(width), int(height))
+
             return img.make_blob(format="png")
 
         return pdf_binary
@@ -226,6 +241,8 @@ class PDFTemplateView(TemplateView):
             if request.GET.get('as', '') == 'png':
                 # Use the png_response_class if HTML was requested.
                 self.response_class = self.png_response_class
+
+
 
             return super(PDFTemplateView, self).get(request,
                                                     *args, **kwargs)
