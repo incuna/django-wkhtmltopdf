@@ -36,6 +36,13 @@ class PDFResponse(HttpResponse):
                 fileheader = 'inline; filename={0}'
 
             filename = content_disposition_filename(filename)
+
+            # Because unidecode will simply discard characters it cannot
+            # replace, we need to make sure the filename actually has one
+            # character at least.
+            if filename.startswith('".'):
+                filename = '"?%s' % filename[1:]
+
             header_content = fileheader.format(filename)
             self['Content-Disposition'] = header_content
         else:
