@@ -1,6 +1,15 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+dev
+---
+
+* update wkhtmltopdf to 0.12.0 version on before_script.sh
+* update docs to reference a wkhtmltopdf on github ( https://github.com/wkhtmltopdf/wkhtmltopdf )
+* add link to official site http://wkhtmltopdf.org/
+
+
+
 1.2.2
 -----
 
