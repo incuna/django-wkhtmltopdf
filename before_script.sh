@@ -8,5 +8,8 @@ echo '## Extracting wkhtmltox'
 tar xvJf wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz
 #sudo chown root:root wkhtmltox
 current_folder=`pwd`
+wkhtmltox_folder=$current_folder/wkhtmltox
+wkhtmltox_exec=$wkhtmltox_folder/bin/wkhtmltopdf
+echo $wkhtmltox_folder
 #sudo mv wkhtmltox /usr/bin/wkhtmltopdf
-export WKHTMLTOPDF_CMD=$current_folder/wkhtmltox
+export WKHTMLTOPDF_CMD=$wkhtmltox_exec
