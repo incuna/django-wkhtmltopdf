@@ -9,4 +9,4 @@ tar xvJf wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz
 #sudo chown root:root wkhtmltox
 current_folder=`pwd`
 #sudo mv wkhtmltox /usr/bin/wkhtmltopdf
-export WKHTMLTOPDF_CMD=$current_folder/wkhtmltox/bin
+export WKHTMLTOPDF_CMD=$current_folder/wkhtmltox
