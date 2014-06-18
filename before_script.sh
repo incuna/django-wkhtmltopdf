@@ -9,4 +9,4 @@ mkdir -p $WKHTMLTOX_FOLDER
 echo "## Extracting wkhtmltox into $WKHTMLTOX_FOLDER"
 tar xvJf wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz -C $WKHTMLTOX_FOLDER
 export WKHTMLTOPDF_CMD=$WKHTMLTOX_FOLDER/wkhtmltox/bin/wkhtmltopdf
-echo $WKHTMLTOPDF_CMD --version
+$WKHTMLTOPDF_CMD --version
