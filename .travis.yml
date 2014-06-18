@@ -18,6 +18,7 @@ before_script:
   - "./before_script.sh"
 install:
   - pip install $DJANGO
+  - pip install -r test_requirements.txt
   - pip install .
 script:
   - make test

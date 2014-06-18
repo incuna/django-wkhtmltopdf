@@ -1,0 +1,2 @@
+colour-runner==0.0.4
+django-discover-runner==1.0
