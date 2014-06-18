@@ -77,12 +77,12 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         content = make_absolute_paths(content)
 
         try:
-            tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
+            # Python3 has 'buffering' arg instead of 'bufsize'
+            tempfile = NamedTemporaryFile(mode=mode, buffering=bufsize,
                                           suffix=suffix, prefix=prefix,
                                           dir=dir, delete=delete)
         except TypeError:
-            # Python 3 has 'buffering' arg for 'NamedTemporaryFile' class
-            tempfile = NamedTemporaryFile(mode=mode, buffering=bufsize,
+            tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                           suffix=suffix, prefix=prefix,
                                           dir=dir, delete=delete)
 

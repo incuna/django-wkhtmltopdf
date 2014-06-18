@@ -7,11 +7,11 @@ import re
 import sys
 
 try:
-    from urllib import pathname2url
-    from urlparse import urljoin
-except ImportError:  # py3k
     from urllib.request import pathname2url
     from urllib.parse import urljoin
+except ImportError:  # Python2
+    from urllib import pathname2url
+    from urlparse import urljoin
 
 from django.conf import settings
 from django.utils import six
