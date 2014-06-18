@@ -5,6 +5,8 @@ python:
   - "3.3"
   - "3.4"
 env:
+  global:
+    - WKHTML_HOME=`pwd`/"_wkhtmltopdf"
   - DJANGO=Django==1.4.13
   - DJANGO=Django==1.5.8
   - DJANGO=Django==1.6.5
@@ -14,8 +16,15 @@ matrix:
       env: DJANGO=Django==1.4.13
     - python: "3.4"
       env: DJANGO=Django==1.4.13
-before_script:
-  - "./before_script.sh"
+before_install:
+  - echo '## Installing dependencies'
+  - sudo apt-get install -y openssl build-essential xorg libssl-dev
+  - echo '## Downloading wkhtmltopdf 0.12.0'
+  - wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz
+  - mkdir -p $WKHTML_HOME
+  - echo "## Extracting wkhtmltox into $WKHTML_HOME"
+  - tar xvJf wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz -C $WKHTML_HOME
+  - export WKHTMLTOPDF_CMD=$WKHTML_HOME/wkhtmltox/bin/wkhtmltopdf
 install:
   - pip install $DJANGO
   - pip install -r test_requirements.txt
