@@ -8,7 +8,7 @@ Changelog for django-wkhtmltopdf
 * Support other Django versions
 * Use TestRunner for tests (and remove run_tests.sh)
 * Add support for Wheel packaging
-
+* Build the wkhtmltopdf binary in .travis.yml (and remove before_script.sh)
 
 1.2.3
 -----
