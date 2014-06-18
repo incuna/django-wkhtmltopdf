@@ -1,7 +1,7 @@
 Changelog for django-wkhtmltopdf
 ================================
 
-0.2.0
+2.0.0
 -----
 
 * Support for Python 3
