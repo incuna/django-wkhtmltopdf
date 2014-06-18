@@ -21,7 +21,7 @@ This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``)
 
 .. _wkhtmltopdf: http://wkhtmltopdf.org/downloads.html
 
-Python 2.6+ through 3.4 is supported.
+Python 2.6+ and 3.3+ is supported.
 
 
 Installation
