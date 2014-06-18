@@ -14,13 +14,12 @@ setup(
     author=wkhtmltopdf.__author__,
     author_email='admin@incuna.com',
     url='https://github.com/incuna/django-wkhtmltopdf',
-    install_requires=['Django>=1.4'],
     zip_safe=False,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
+        'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'Topic :: Software Development',
-        'Topic :: Utilities',
+        'Operating System :: OS Independent',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.6',
@@ -28,6 +27,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Framework :: Django',
     ],
     keywords='django wkhtmltopdf pdf',
 )
