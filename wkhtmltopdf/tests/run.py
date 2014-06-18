@@ -2,7 +2,6 @@
 import os
 import sys
 
-from colour_runner.django_runner import ColourRunnerMixin
 from django.conf import settings
 
 DIRNAME = os.path.abspath(os.path.dirname(__file__))
@@ -33,11 +32,7 @@ except ImportError:
     from discover_runner.runner import DiscoverRunner
 
 
-class TestRunner(ColourRunnerMixin, DiscoverRunner):
-    pass
-
-
-test_runner = TestRunner(verbosity=1)
+test_runner = DiscoverRunner(verbosity=1)
 failures = test_runner.run_tests(['wkhtmltopdf'])
 if failures:
     sys.exit(1)
