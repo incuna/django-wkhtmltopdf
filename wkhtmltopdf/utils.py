@@ -5,10 +5,16 @@ from itertools import chain
 import os
 import re
 import sys
-import urllib
-from urlparse import urljoin
+
+try:
+    from urllib import pathname2url
+    from urlparse import urljoin
+except ImportError:  # py3k
+    from urllib.request import pathname2url
+    from urllib.parse import urljoin
 
 from django.conf import settings
+from django.utils import six
 
 from .subprocess import check_output
 
@@ -22,7 +28,7 @@ def _options_to_args(**options):
             continue
         flags.append('--' + name.replace('_', '-'))
         if value is not True:
-            flags.append(unicode(value))
+            flags.append(six.text_type(value))
     return flags
 
 
@@ -56,7 +62,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                     orientation='Landscape',
                     disable_javascript=True)
     """
-    if isinstance(pages, basestring):
+    if isinstance(pages, six.string_types):
         # Support a single page.
         pages = [pages]
 
@@ -113,19 +119,20 @@ def http_quote(string):
     valid ascii charset string you can use in, say, http headers and the
     like.
     """
-    if isinstance(string, unicode):
+    if isinstance(string, six.text_type):
         try:
             import unidecode
             string = unidecode.unidecode(string)
         except ImportError:
             string = string.encode('ascii', 'replace')
     # Wrap in double-quotes for ; , and the like
-    return '"{0!s}"'.format(string.replace('\\', '\\\\').replace('"', '\\"'))
+    string = string.replace(b'\\', b'\\\\').replace(b'"', b'\\"')
+    return '"{0!s}"'.format(string.decode())
 
 
 def pathname2fileurl(pathname):
     """Returns a file:// URL for pathname. Handles OS-specific conversions."""
-    return urljoin('file:', urllib.pathname2url(pathname))
+    return urljoin('file:', pathname2url(pathname))
 
 
 def make_absolute_paths(content):

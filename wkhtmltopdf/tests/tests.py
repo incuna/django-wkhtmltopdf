@@ -8,6 +8,7 @@ import sys
 from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.utils.encoding import smart_str
 
 from wkhtmltopdf.subprocess import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
@@ -41,15 +42,15 @@ class TestUtils(TestCase):
         try:
             # Standard call
             pdf_output = wkhtmltopdf(pages=[temp_file.name])
-            self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
+            self.assertTrue(pdf_output.startswith(b'%PDF'), pdf_output)
 
             # Single page
             pdf_output = wkhtmltopdf(pages=temp_file.name)
-            self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
+            self.assertTrue(pdf_output.startswith(b'%PDF'), pdf_output)
 
             # Unicode
             pdf_output = wkhtmltopdf(pages=[temp_file.name], title=u'♥')
-            self.assertTrue(pdf_output.startswith('%PDF'), pdf_output)
+            self.assertTrue(pdf_output.startswith(b'%PDF'), pdf_output)
 
             # Invalid arguments
             self.assertRaises(CalledProcessError,
@@ -63,7 +64,7 @@ class TestUtils(TestCase):
         response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
         temp_file = response.render_to_temporary_file('sample.html')
         temp_file.seek(0)
-        saved_content = temp_file.read()
+        saved_content = smart_str(temp_file.read())
         self.assertTrue(title in saved_content)
         temp_file.close()
 
@@ -80,11 +81,11 @@ class TestViews(TestCase):
         # 404
         response = PDFResponse(content='', status=404)
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.content, '')
+        self.assertEqual(response.content, b'')
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertFalse(response.has_header('Content-Disposition'))
 
-        content = '%PDF-1.4\n%%EOF'
+        content = b'%PDF-1.4\n%%EOF'
         # Without filename
         response = PDFResponse(content=content)
         self.assertEqual(response.status_code, 200)
@@ -153,14 +154,14 @@ class TestViews(TestCase):
         # Render to temporary file
         tempfile = response.render_to_temporary_file(self.template)
         tempfile.seek(0)
-        html_content = tempfile.read()
+        html_content = smart_str(tempfile.read())
         self.assertTrue(html_content.startswith('<html>'))
         self.assertTrue('<h1>{title}</h1>'.format(**context)
                         in html_content)
 
         pdf_content = response.rendered_content
-        self.assertTrue(pdf_content.startswith('%PDF-'))
-        self.assertTrue(pdf_content.endswith('%%EOF\n'))
+        self.assertTrue(pdf_content.startswith(b'%PDF-'))
+        self.assertTrue(pdf_content.endswith(b'%%EOF\n'))
 
         # Footer
         cmd_options = {'title': 'Test PDF'}
@@ -179,7 +180,7 @@ class TestViews(TestCase):
 
         tempfile = response.render_to_temporary_file(self.footer_template)
         tempfile.seek(0)
-        footer_content = tempfile.read()
+        footer_content = smart_str(tempfile.read())
         footer_content = make_absolute_paths(footer_content)
 
         media_url = 'file://{0}/'.format(settings.MEDIA_ROOT)
@@ -189,8 +190,8 @@ class TestViews(TestCase):
         self.assertTrue(static_url in footer_content, True)
 
         pdf_content = response.rendered_content
-        self.assertTrue('\0'.join('{title}'.format(**cmd_options))
-                        in pdf_content)
+        self.assertTrue(pdf_content.startswith(b'%PDF-'))
+        self.assertTrue(pdf_content.endswith(b'%%EOF\n'))
 
     def test_pdf_template_response_to_browser(self):
         self.test_pdf_template_response(show_content=True)
@@ -214,8 +215,8 @@ class TestViews(TestCase):
             fileheader = self.inline_fileheader
         self.assertEqual(response['Content-Disposition'],
                          fileheader.format(self.pdf_filename))
-        self.assertTrue(response.content.startswith('%PDF-'))
-        self.assertTrue(response.content.endswith('%%EOF\n'))
+        self.assertTrue(response.content.startswith(b'%PDF-'))
+        self.assertTrue(response.content.endswith(b'%%EOF\n'))
 
         # As HTML
         request = RequestFactory().get('/?as=html')
@@ -223,7 +224,7 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 200)
         response.render()
         self.assertFalse(response.has_header('Content-Disposition'))
-        self.assertTrue(response.content.startswith('<html>'))
+        self.assertTrue(response.content.startswith(b'<html>'))
 
         # POST
         request = RequestFactory().post('/')
@@ -254,8 +255,8 @@ class TestViews(TestCase):
         # not sure how we can test this as the contents is all encoded...
         # best we can do for the moment is check it's a pdf and it worked.
         # self.assertTrue('☃' in response.content)
-        self.assertTrue(response.content.startswith('%PDF-'))
-        self.assertTrue(response.content.endswith('%%EOF\n'))
+        self.assertTrue(response.content.startswith(b'%PDF-'))
+        self.assertTrue(response.content.endswith(b'%%EOF\n'))
 
     def test_pdf_template_view_unicode_to_browser(self):
         self.test_pdf_template_view_unicode(show_content=True)
