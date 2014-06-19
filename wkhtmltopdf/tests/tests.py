@@ -8,6 +8,7 @@ import sys
 from django.conf import settings
 from django.test import TestCase
 from django.test.client import RequestFactory
+from django.utils import six
 from django.utils.encoding import smart_str
 
 from wkhtmltopdf.subprocess import CalledProcessError
@@ -190,8 +191,8 @@ class TestViews(TestCase):
         self.assertTrue(static_url in footer_content, True)
 
         pdf_content = response.rendered_content
-        self.assertTrue(pdf_content.startswith(b'%PDF-'))
-        self.assertTrue(pdf_content.endswith(b'%%EOF\n'))
+        title = '\0'.join(cmd_options['title'])
+        self.assertIn(six.b(title), pdf_content)
 
     def test_pdf_template_response_to_browser(self):
         self.test_pdf_template_response(show_content=True)
