@@ -8,19 +8,20 @@ django-wkhtmltopdf
 Converts html to PDF
 --------------------
 
-Provides a thin wrapper to the wkhtmltopdf binary from https://github.com/wkhtmltopdf/wkhtmltopdf
-Get the wkhtmltopdf binaries from http://wkhtmltopdf.org/
+Provides a thin Django wrapper for the `wkhtmltopdf`_ binary.
 
+.. _wkhtmltopdf: http://wkhtmltopdf.org/
 
 Requirements
 ------------
 
 Install the `wkhtmltopdf`_ binary.
+
 This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``).
 
-.. _wkhtmltopdf: http://wkhtmltopdf.org/
+.. _wkhtmltopdf: http://wkhtmltopdf.org/downloads.html
 
-Python 2.6
+Python 2.6+ and 3.3+ is supported.
 
 
 Installation

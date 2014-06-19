@@ -1,14 +1,22 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+2.0.0
+-----
+
+* Support for Python 3
+* Support other Django versions
+* Use TestRunner for tests (and remove run_tests.sh)
+* Add support for Wheel packaging
+* Build the wkhtmltopdf binary in .travis.yml (and remove before_script.sh)
 
 1.2.3
 -----
 
-* update wkhtmltopdf binary to 0.12.0 version on before_script.sh
-* update docs to reference a wkhtmltopdf on github ( https://github.com/wkhtmltopdf/wkhtmltopdf )
-* add link to official site http://wkhtmltopdf.org/
-* move tests from Makefile to run_tests.sh
+* Update wkhtmltopdf binary to 0.12.0 version on before_script.sh
+* Update docs to reference a wkhtmltopdf on github
+* Add link to official site http://wkhtmltopdf.org/
+* Move tests from Makefile to run_tests.sh
 
 
 1.2.2

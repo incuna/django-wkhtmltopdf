@@ -2,10 +2,32 @@ language: python
 python:
   - "2.6"
   - "2.7"
-before_script:
-  - "./before_script.sh"
+  - "3.3"
+  - "3.4"
+env:
+  - DJANGO="Django>=1.4,<1.5"
+  - DJANGO="Django>=1.5,<1.6"
+  - DJANGO="Django>=1.6,<1.7"
+matrix:
+  exclude:
+    - python: "3.3"
+      env: DJANGO="Django>=1.4,<1.5"
+    - python: "3.4"
+      env: DJANGO="Django>=1.4,<1.5"
+before_install:
+  - PWD=`pwd`
+  - "echo '## Installing dependencies'"
+  - "sudo apt-get update"
+  - "sudo apt-get install -y openssl build-essential xorg libssl-dev"
+  - "echo '## Downloading wkhtmltopdf 0.12.0'"
+  - "wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz"
+  - "mkdir -p $PWD"
+  - "echo '## Extracting wkhtmltox into $PWD'"
+  - "tar xvJf wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz -C $PWD"
+  - "export WKHTMLTOPDF_CMD=$PWD/wkhtmltox/bin/wkhtmltopdf"
 install:
-  - pip install -r wkhtmltopdf/tests/test_requirements.txt
+  - pip install $DJANGO
+  - pip install -r test_requirements.txt
   - pip install .
 script:
   - make test
