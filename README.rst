@@ -22,7 +22,7 @@ Provides a thin Django wrapper for the `wkhtmltopdf <http://wkhtmltopdf.org>`_ b
 Requirements
 ------------
 
-Install the `wkhtmltopdf <http://wkhtmltopdf.org/downloads.html>`_ binary.
+Install the `wkhtmltopdf static binary <http://wkhtmltopdf.org/downloads.html>`_.
 
 This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``).
 
