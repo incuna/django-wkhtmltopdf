@@ -15,14 +15,13 @@ from .utils import (content_disposition_filename, make_absolute_paths,
 class PDFResponse(HttpResponse):
     """HttpResponse that sets the headers for PDF output."""
 
-    def __init__(self, content, mimetype=None, status=200, content_type=None,
+    def __init__(self, content, status=200, content_type=None,
             filename=None, show_content_in_browser=None, *args, **kwargs):
 
         if content_type is None:
             content_type = 'application/pdf'
 
         super(PDFResponse, self).__init__(content=content,
-                                          mimetype=mimetype,
                                           status=status,
                                           content_type=content_type)
         self.set_filename(filename, show_content_in_browser)
@@ -44,7 +43,7 @@ class PDFResponse(HttpResponse):
 class PDFTemplateResponse(TemplateResponse, PDFResponse):
     """Renders a Template into a PDF using wkhtmltopdf"""
 
-    def __init__(self, request, template, context=None, mimetype=None,
+    def __init__(self, request, template, context=None,
                  status=None, content_type=None, current_app=None,
                  filename=None, show_content_in_browser=None,
                  header_template=None, footer_template=None,
@@ -53,7 +52,6 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
                                                   context=context,
-                                                  mimetype=mimetype,
                                                   status=status,
                                                   content_type=content_type,
                                                   current_app=None,
