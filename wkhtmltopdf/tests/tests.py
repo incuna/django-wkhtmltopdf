@@ -78,7 +78,7 @@ class TestViews(TestCase):
     inline_fileheader = 'inline; filename="{0}"'
 
     def test_pdf_response(self):
-        """Should generate the correct HttpResponse object and mimetype"""
+        """Should generate the correct HttpResponse object and content type."""
         # 404
         response = PDFResponse(content='', status=404)
         self.assertEqual(response.status_code, 404)
@@ -129,9 +129,6 @@ class TestViews(TestCase):
         # Content-Type
         response = PDFResponse(content=content,
                                content_type='application/x-pdf')
-        self.assertEqual(response['Content-Type'], 'application/x-pdf')
-        response = PDFResponse(content=content,
-                               mimetype='application/x-pdf')
         self.assertEqual(response['Content-Type'], 'application/x-pdf')
 
     def test_pdf_template_response(self, show_content=False):
