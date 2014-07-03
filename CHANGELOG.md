@@ -1,6 +1,11 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+2.0.1
+-----
+
+* Remove deprecated argument `mimetype` of `PDFResponse` class.
+
 2.0.0
 -----
 
