@@ -86,7 +86,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                                           dir=dir, delete=delete)
 
         try:
-            tempfile.write(content.encode('utf-8'))
+            tempfile.write(content)
             tempfile.flush()
             return tempfile
         except:
