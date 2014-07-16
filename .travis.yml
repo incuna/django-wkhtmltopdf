@@ -16,7 +16,6 @@ matrix:
       env: DJANGO="Django>=1.4,<1.5"
 before_install:
   - PWD=`pwd`
-  - WHICH_WK=`which wkhtmltopdf`
   - "echo '## Installing dependencies'"
   - "sudo apt-get update"
   - "sudo apt-get install -y openssl build-essential xorg libssl-dev"
@@ -24,6 +23,7 @@ before_install:
   - "wget http://freefr.dl.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb"
   - "echo '## Installing wkhtmltox'"
   - "dpkg -i wkhtmltox-0.12.1_linux-precise-amd64.deb"
+  - WHICH_WK=`which wkhtmltopdf`
   - "export WKHTMLTOPDF_CMD=$WHICH_WK"
 install:
   - pip install $DJANGO
