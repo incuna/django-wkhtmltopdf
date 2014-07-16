@@ -19,11 +19,11 @@ before_install:
   - "echo '## Installing dependencies'"
   - "sudo apt-get update"
   - "sudo apt-get install -y openssl build-essential xorg libssl-dev"
-  - "echo '## Downloading wkhtmltopdf 0.12.0'"
-  - "wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.0/wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz"
+  - "echo '## Downloading wkhtmltopdf 0.12.1'"
+  - "wget http://downloads.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1.tar.bz2"
   - "mkdir -p $PWD"
   - "echo '## Extracting wkhtmltox into $PWD'"
-  - "tar xvJf wkhtmltox-linux-amd64_0.12.0-03c001d.tar.xz -C $PWD"
+  - "tar xvjf wkhtmltox-0.12.1.tar.bz2 -C $PWD"
   - "export WKHTMLTOPDF_CMD=$PWD/wkhtmltox/bin/wkhtmltopdf"
 install:
   - pip install $DJANGO
