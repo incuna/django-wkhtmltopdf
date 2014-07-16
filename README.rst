@@ -5,7 +5,7 @@ django-wkhtmltopdf
     :target: http://badge.fury.io/py/django-wkhtmltopdf
     :alt: Latest version
 
-.. image:: https://travis-ci.org/incuna/django-wkhtmltopdf.png
+.. image:: https://travis-ci.org/incuna/django-wkhtmltopdf.png?branch=master
    :target: https://travis-ci.org/incuna/django-wkhtmltopdf
    :alt: Travis-CI
 
