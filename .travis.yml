@@ -22,7 +22,7 @@ before_install:
   - "echo '## Downloading wkhtmltopdf 0.12.1'"
   - "wget http://freefr.dl.sourceforge.net/project/wkhtmltopdf/0.12.1/wkhtmltox-0.12.1_linux-precise-amd64.deb"
   - "echo '## Installing wkhtmltox'"
-  - "dpkg -i wkhtmltox-0.12.1_linux-precise-amd64.deb"
+  - "sudo dpkg -i wkhtmltox-0.12.1_linux-precise-amd64.deb"
   - WHICH_WK=`which wkhtmltopdf`
   - "export WKHTMLTOPDF_CMD=$WHICH_WK"
 install:
