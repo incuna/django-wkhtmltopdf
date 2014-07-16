@@ -73,7 +73,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         context = self.resolve_context(self.context_data)
 
         content = smart_str(template.render(context))
-        content = make_absolute_paths(content)
+        content = make_absolute_paths(unicode(content, 'ascii', 'ignore'))
 
         try:
             # Python3 has 'buffering' arg instead of 'bufsize'
