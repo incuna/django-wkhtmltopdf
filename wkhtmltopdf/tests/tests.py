@@ -59,6 +59,17 @@ class TestUtils(TestCase):
         finally:
             temp_file.close()
 
+    def test_wkhtmltopdf_with_unicode_content(self):
+        """A wkhtmltopdf call should render unicode content properly"""
+        title = u'♥'
+        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        temp_file = response.render_to_temporary_file('unicode.html')
+        try:
+            pdf_output = wkhtmltopdf(pages=[temp_file.name])
+            self.assertTrue(pdf_output.startswith(b'%PDF'), pdf_output)
+        finally:
+            temp_file.close()
+
     def test_PDFTemplateResponse_render_to_temporary_file(self):
         """Should render a template to a temporary file."""
         title = 'A test template.'
