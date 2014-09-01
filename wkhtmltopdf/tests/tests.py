@@ -17,6 +17,18 @@ from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
+class UnicodeContentPDFTemplateView(PDFTemplateView):
+    """
+    PDFTemplateView with the addition of unicode content in his context.
+
+    Used in unicode content view testing.
+    """
+    def get_context_data(self, **kwargs):
+        Base = super(UnicodeContentPDFTemplateView, self)
+        context = Base.get_context_data(**kwargs)
+        context['title'] = u'♥'
+        return context
+
 class TestUtils(TestCase):
     def setUp(self):
         # Clear standard error
@@ -244,11 +256,12 @@ class TestViews(TestCase):
         self.test_pdf_template_view(show_content=True)
 
     def test_pdf_template_view_unicode(self, show_content=False):
-        """Test PDFTemplateView."""
-
-        view = PDFTemplateView.as_view(filename=self.pdf_filename,
-                                       show_content_in_browser=show_content,
-                                       template_name=self.template)
+        """Test PDFTemplateView with unicode content."""
+        view = UnicodeContentPDFTemplateView.as_view(
+            filename=self.pdf_filename,
+            show_content_in_browser=show_content,
+            template_name=self.template
+        )
 
         # As PDF
         request = RequestFactory().get('/')
