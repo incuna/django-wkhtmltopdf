@@ -6,11 +6,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
-try:
-    from django.utils.encoding import smart_text
-except ImportError:
-    # Django 1.4 doesn't have smart_text, we must smart_unicode in place
-    from django.utils.encoding import smart_unicode as smart_text
+from django.utils.encoding import smart_text
 
 from .utils import (content_disposition_filename, make_absolute_paths,
     wkhtmltopdf)
