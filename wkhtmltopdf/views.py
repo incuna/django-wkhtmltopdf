@@ -5,8 +5,8 @@ from tempfile import NamedTemporaryFile
 from django.conf import settings
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
-from django.utils.encoding import smart_str
 from django.views.generic import TemplateView
+from django.utils.encoding import smart_text
 
 from .utils import (content_disposition_filename, make_absolute_paths,
     wkhtmltopdf)
@@ -72,7 +72,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 
         context = self.resolve_context(self.context_data)
 
-        content = smart_str(template.render(context))
+        content = smart_text(template.render(context))
         content = make_absolute_paths(content)
 
         try:
