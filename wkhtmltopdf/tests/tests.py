@@ -50,7 +50,9 @@ class TestUtils(TestCase):
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
         title = 'A test template.'
-        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        response = PDFTemplateResponse(self.factory.get('/'),
+                                       None,
+                                       context={'title': title})
         temp_file = response.render_to_temporary_file('sample.html')
         try:
             # Standard call
@@ -74,7 +76,9 @@ class TestUtils(TestCase):
     def test_wkhtmltopdf_with_unicode_content(self):
         """A wkhtmltopdf call should render unicode content properly"""
         title = u'♥'
-        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        response = PDFTemplateResponse(self.factory.get('/'),
+                                       None,
+                                       context={'title': title})
         temp_file = response.render_to_temporary_file('unicode.html')
         try:
             pdf_output = wkhtmltopdf(pages=[temp_file.name])
@@ -85,7 +89,9 @@ class TestUtils(TestCase):
     def test_PDFTemplateResponse_render_to_temporary_file(self):
         """Should render a template to a temporary file."""
         title = 'A test template.'
-        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        response = PDFTemplateResponse(self.factory.get('/'),
+                                       None,
+                                       context={'title': title})
         temp_file = response.render_to_temporary_file('sample.html')
         temp_file.seek(0)
         saved_content = smart_str(temp_file.read())
@@ -101,7 +107,7 @@ class TestViews(TestCase):
     inline_fileheader = 'inline; filename="{0}"'
 
     def test_pdf_response(self):
-        """Should generate the correct HttpResponse object and content type."""
+        """Should generate correct HttpResponse object and content type."""
         # 404
         response = PDFResponse(content='', status=404)
         self.assertEqual(response.status_code, 404)
