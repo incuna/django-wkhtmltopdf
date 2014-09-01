@@ -17,6 +17,18 @@ from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
+class UnicodeContentPDFTemplateView(PDFTemplateView):
+    """
+    PDFTemplateView with the addition of unicode content in his context.
+
+    Used in unicode content view testing.
+    """
+    def get_context_data(self, **kwargs):
+        Base = super(UnicodeContentPDFTemplateView, self)
+        context = Base.get_context_data(**kwargs)
+        context['title'] = u'♥'
+        return context
+
 class TestUtils(TestCase):
     def setUp(self):
         # Clear standard error
@@ -38,7 +50,9 @@ class TestUtils(TestCase):
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
         title = 'A test template.'
-        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        response = PDFTemplateResponse(self.factory.get('/'),
+                                       None,
+                                       context={'title': title})
         temp_file = response.render_to_temporary_file('sample.html')
         try:
             # Standard call
@@ -59,10 +73,25 @@ class TestUtils(TestCase):
         finally:
             temp_file.close()
 
+    def test_wkhtmltopdf_with_unicode_content(self):
+        """A wkhtmltopdf call should render unicode content properly"""
+        title = u'♥'
+        response = PDFTemplateResponse(self.factory.get('/'),
+                                       None,
+                                       context={'title': title})
+        temp_file = response.render_to_temporary_file('unicode.html')
+        try:
+            pdf_output = wkhtmltopdf(pages=[temp_file.name])
+            self.assertTrue(pdf_output.startswith(b'%PDF'), pdf_output)
+        finally:
+            temp_file.close()
+
     def test_PDFTemplateResponse_render_to_temporary_file(self):
         """Should render a template to a temporary file."""
         title = 'A test template.'
-        response = PDFTemplateResponse(self.factory.get('/'), None, context={'title': title})
+        response = PDFTemplateResponse(self.factory.get('/'),
+                                       None,
+                                       context={'title': title})
         temp_file = response.render_to_temporary_file('sample.html')
         temp_file.seek(0)
         saved_content = smart_str(temp_file.read())
@@ -78,7 +107,7 @@ class TestViews(TestCase):
     inline_fileheader = 'inline; filename="{0}"'
 
     def test_pdf_response(self):
-        """Should generate the correct HttpResponse object and content type."""
+        """Should generate correct HttpResponse object and content type."""
         # 404
         response = PDFResponse(content='', status=404)
         self.assertEqual(response.status_code, 404)
@@ -233,11 +262,12 @@ class TestViews(TestCase):
         self.test_pdf_template_view(show_content=True)
 
     def test_pdf_template_view_unicode(self, show_content=False):
-        """Test PDFTemplateView."""
-
-        view = PDFTemplateView.as_view(filename=self.pdf_filename,
-                                       show_content_in_browser=show_content,
-                                       template_name=self.template)
+        """Test PDFTemplateView with unicode content."""
+        view = UnicodeContentPDFTemplateView.as_view(
+            filename=self.pdf_filename,
+            show_content_in_browser=show_content,
+            template_name=self.template
+        )
 
         # As PDF
         request = RequestFactory().get('/')
