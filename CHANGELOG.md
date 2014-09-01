@@ -1,6 +1,11 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+2.0.2
+-----
+
+* Fix Unicode encoding issues on Python2
+
 2.0.1
 -----
 
