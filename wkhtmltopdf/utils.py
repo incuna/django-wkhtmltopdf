@@ -34,7 +34,7 @@ def _options_to_args(**options):
 
 def wkhtmltopdf(pages, output=None, **kwargs):
     """
-    Converts html to PDF using http://code.google.com/p/wkhtmltopdf/.
+    Converts html to PDF using http://wkhtmltopdf.org/.
 
     pages: List of file paths or URLs of the html to be converted.
     output: Optional output file path. If None, the output is returned.
