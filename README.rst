@@ -58,6 +58,13 @@ The default is: ::
         'quiet': True,
     }
 
+Paths in the HTML will be automatically converted to absolute.
+This can be configured via ``WKHTMLTOPDF_CMD_OPTIONS`` in ``settings.py``
+The default is: ::
+
+    WKHTMLTOPDF_MAKE_ABSOLUTE_PATHS = True
+
+
 License
 -------
 
