@@ -5,6 +5,7 @@ from itertools import chain
 import os
 import re
 import sys
+import shlex
 
 try:
     from urllib.request import pathname2url
@@ -88,7 +89,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     cmd = 'WKHTMLTOPDF_CMD'
     cmd = getattr(settings, cmd, os.environ.get(cmd, 'wkhtmltopdf'))
 
-    ck_args = list(chain(cmd.split(),
+    ck_args = list(chain(shlex.split(cmd),
                          _options_to_args(**options),
                          list(pages),
                          [output]))
