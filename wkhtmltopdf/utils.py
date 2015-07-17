@@ -152,7 +152,7 @@ def make_absolute_paths(content):
     has_scheme = re.compile(r'^[^:/]+://')
 
     for x in overrides:
-        if has_scheme.match(x['url']):
+        if not x['url'] or has_scheme.match(x['url']):
             continue
 
         if not x['root'].endswith('/'):
