@@ -138,17 +138,23 @@ def pathname2fileurl(pathname):
 def make_absolute_paths(content):
     """Convert all MEDIA files into a file://URL paths in order to
     correctly get it displayed in PDFs."""
-
+    
     overrides = [
-        {
-            'root': settings.MEDIA_ROOT,
-            'url': settings.MEDIA_URL,
-        },
         {
             'root': settings.STATIC_ROOT,
             'url': settings.STATIC_URL,
         }
     ]
+    
+    #MEDIA_ROOT and MEDIA_URL are both empty strings by default
+    #don't include them if they are empty
+    if settings.MEDIA_ROOT != "" and settings.MEDIA_URL != "":
+        overrides.append(
+            {
+                'root': settings.MEDIA_ROOT,
+                'url': settings.MEDIA_URL,
+            })
+    
     has_scheme = re.compile(r'^[^:/]+://')
 
     for x in overrides:
