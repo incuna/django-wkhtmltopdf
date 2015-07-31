@@ -14,10 +14,10 @@ django-wkhtmltopdf
     :alt: Number of PyPI downloads
 
 
-Converts html to PDF
+Converts HTML to PDF
 --------------------
 
-Provides a thin Django wrapper for the `wkhtmltopdf <http://wkhtmltopdf.org>`_ binary.
+Provides Django views to wrap the HTML to PDF conversion of the `wkhtmltopdf <http://wkhtmltopdf.org>`_ binary.
 
 Requirements
 ------------
@@ -26,7 +26,7 @@ Install the `wkhtmltopdf static binary <http://wkhtmltopdf.org/downloads.html>`_
 
 This requires libfontconfig (on Ubuntu: ``sudo aptitude install libfontconfig``).
 
-Python 2.6+ and 3.3+ is supported.
+Python 2.6+ and 3.3+ are supported.
 
 
 Installation
@@ -39,7 +39,7 @@ Add ``'wkhtmltopdf'`` to ``INSTALLED_APPS`` in your ``settings.py``.
 By default it will execute the first ``wkhtmltopdf`` command found on your ``PATH``.
 
 If you can't add wkhtmltopdf to your ``PATH``, you can set ``WKHTMLTOPDF_CMD`` to a
-specific execuatable:
+specific executable:
 
 e.g. in ``settings.py``: ::
 
