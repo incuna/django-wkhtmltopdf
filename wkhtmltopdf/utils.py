@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import logging
 
 from copy import copy
 from itertools import chain
@@ -19,6 +20,7 @@ from django.utils import six
 
 from .subprocess import check_output
 
+log = logging.getLogger(__name__)
 
 def _options_to_args(**options):
     """Converts ``options`` into a list of command-line arguments."""
@@ -96,6 +98,9 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     ck_kwargs = {'env': env}
     if hasattr(sys.stderr, 'fileno'):
         ck_kwargs['stderr'] = sys.stderr
+
+    log.debug(' '.join(ck_args))
+
     return check_output(ck_args, **ck_kwargs)
 
 
@@ -140,16 +145,23 @@ def make_absolute_paths(content):
     """Convert all MEDIA files into a file://URL paths in order to
     correctly get it displayed in PDFs."""
 
-    overrides = [
-        {
+
+    # overrides is the set of base prefixes we look for in the content.
+    # Make sure the base prefix is not blank before we add it to the list
+    overrides = []
+
+    if settings.MEDIA_ROOT and settings.MEDIA_URL:
+        overrides.append({
             'root': settings.MEDIA_ROOT,
             'url': settings.MEDIA_URL,
-        },
-        {
+        })
+
+    if settings.STATIC_ROOT and settings.STATIC_URL:
+        overrides.append({
             'root': settings.STATIC_ROOT,
             'url': settings.STATIC_URL,
-        }
-    ]
+        })
+
     has_scheme = re.compile(r'^[^:/]+://')
 
     for x in overrides:
