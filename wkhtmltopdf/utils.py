@@ -94,8 +94,13 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                          list(pages),
                          [output]))
     ck_kwargs = {'env': env}
-    if hasattr(sys.stderr, 'fileno'):
+    try:
+        i = sys.stderr.fileno()
         ck_kwargs['stderr'] = sys.stderr
+    except AttributeError:
+        # can't call fileno() on mod_wsgi stderr object
+        pass
+
     return check_output(ck_args, **ck_kwargs)
 
 
@@ -153,7 +158,7 @@ def make_absolute_paths(content):
     has_scheme = re.compile(r'^[^:/]+://')
 
     for x in overrides:
-        if has_scheme.match(x['url']):
+        if not x['url'] or has_scheme.match(x['url']):
             continue
 
         if not x['root'].endswith('/'):
