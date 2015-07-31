@@ -73,7 +73,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         context = self.resolve_context(self.context_data)
 
         content = smart_text(template.render(context))
-        content = make_absolute_paths(content)
+        
+        if getattr(settings, 'WKHTMLTOPDF_MAKE_ABS_PATHS', True):
+            content = make_absolute_paths(content)
 
         try:
             # Python3 has 'buffering' arg instead of 'bufsize'

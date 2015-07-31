@@ -67,3 +67,14 @@ when using ``wkhtmltopdf --use-xserver``:
 .. code-block:: python
 
     WKHTMLTOPDF_ENV = {'DISPLAY': ':2'}
+
+
+WKHTMLTOPDF_MAKE_ABS_PATHS
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``True``
+
+A boolean that turns on/off converting all MEDIA files into a 'file://URL' paths
+in order to get it displayed in PDFs.
+You may want to disable it for manual paths management.
+
