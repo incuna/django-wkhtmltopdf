@@ -1,6 +1,13 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+2.0.3
+--------
+
+* Use shlex for argument splitting (thanks DeadWisdom)
+* Skip absolute path substitution where STATIC or MEDIA URL are empty or None
+  (thanks powderflask)
+
 2.0.2
 -----
 
