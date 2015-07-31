@@ -58,6 +58,11 @@ The default is: ::
         'quiet': True,
     }
 
+Documentation
+-------------
+
+Documentation is available at http://django-wkhtmltopdf.readthedocs.org/en/latest/.
+
 License
 -------
 
