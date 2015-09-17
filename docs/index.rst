@@ -6,7 +6,7 @@ django-wkhtmltopdf
 the wkhtmltopdf_ library, allowing you to write using the technologies you know
 - HTML and CSS - and output a PDF file.
 
-.. _wkhtmltopdf: http://code.google.com/p/wkhtmltopdf/
+.. _wkhtmltopdf: http://wkhtmltopdf.org/
 
 Quickstart
 ==========
@@ -17,7 +17,7 @@ Quickstart
 
 Grab the wkhtmltopdf binary_ for your platform.
 
-.. _binary: http://code.google.com/p/wkhtmltopdf/downloads/list
+.. _binary: http://wkhtmltopdf.org/downloads.html
 
 ``settings.py``
 
@@ -46,7 +46,7 @@ Contribute
 
 You can fork the project on Github_.
 
-.. _Github: http://github.com/incuna/django-wkhtmltopdf
+.. _Github: https://github.com/incuna/django-wkhtmltopdf
 
 Contents
 ========
