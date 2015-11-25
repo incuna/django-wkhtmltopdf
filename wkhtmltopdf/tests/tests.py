@@ -6,6 +6,7 @@ import os
 import sys
 
 from django.conf import settings
+from django.template import loader, RequestContext
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import six
@@ -13,7 +14,7 @@ from django.utils.encoding import smart_str
 
 from wkhtmltopdf.subprocess import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
-    wkhtmltopdf)
+                               wkhtmltopdf, render_to_temporary_file)
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
@@ -50,10 +51,8 @@ class TestUtils(TestCase):
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
         title = 'A test template.'
-        response = PDFTemplateResponse(self.factory.get('/'),
-                                       None,
-                                       context={'title': title})
-        temp_file = response.render_to_temporary_file('sample.html')
+        template = loader.get_template('sample.html')
+        temp_file = render_to_temporary_file(template, context={'title': title})
         try:
             # Standard call
             pdf_output = wkhtmltopdf(pages=[temp_file.name])
@@ -76,23 +75,20 @@ class TestUtils(TestCase):
     def test_wkhtmltopdf_with_unicode_content(self):
         """A wkhtmltopdf call should render unicode content properly"""
         title = u'♥'
-        response = PDFTemplateResponse(self.factory.get('/'),
-                                       None,
-                                       context={'title': title})
-        temp_file = response.render_to_temporary_file('unicode.html')
+        template = loader.get_template('unicode.html')
+        temp_file = render_to_temporary_file(template, context={'title': title})
         try:
             pdf_output = wkhtmltopdf(pages=[temp_file.name])
             self.assertTrue(pdf_output.startswith(b'%PDF'), pdf_output)
         finally:
             temp_file.close()
 
-    def test_PDFTemplateResponse_render_to_temporary_file(self):
+    def test_render_to_temporary_file(self):
         """Should render a template to a temporary file."""
         title = 'A test template.'
-        response = PDFTemplateResponse(self.factory.get('/'),
-                                       None,
-                                       context={'title': title})
-        temp_file = response.render_to_temporary_file('sample.html')
+
+        template = loader.get_template('sample.html')
+        temp_file = render_to_temporary_file(template, context={'title': title})
         temp_file.seek(0)
         saved_content = smart_str(temp_file.read())
         self.assertTrue(title in saved_content)
@@ -179,7 +175,8 @@ class TestViews(TestCase):
         self.assertFalse(response.has_header('Content-Disposition'))
 
         # Render to temporary file
-        tempfile = response.render_to_temporary_file(self.template)
+        template = loader.get_template(self.template)
+        tempfile = render_to_temporary_file(template, context=context)
         tempfile.seek(0)
         html_content = smart_str(tempfile.read())
         self.assertTrue(html_content.startswith('<html>'))
@@ -205,7 +202,8 @@ class TestViews(TestCase):
         self.assertEqual(response.cmd_options, cmd_options)
         self.assertTrue(response.has_header('Content-Disposition'))
 
-        tempfile = response.render_to_temporary_file(self.footer_template)
+        footer_template = loader.get_template(self.footer_template)
+        tempfile = render_to_temporary_file(footer_template, context=RequestContext(request, context))
         tempfile.seek(0)
         footer_content = smart_str(tempfile.read())
         footer_content = make_absolute_paths(footer_content)
