@@ -98,7 +98,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     try:
         i = sys.stderr.fileno()
         ck_kwargs['stderr'] = sys.stderr
-    except AttributeError, IOError:
+    except (AttributeError, IOError):
         # can't call fileno() on mod_wsgi stderr object
         pass
 
