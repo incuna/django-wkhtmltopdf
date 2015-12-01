@@ -1,15 +1,10 @@
 from __future__ import absolute_import
 
-from tempfile import NamedTemporaryFile
-
-from django.conf import settings
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.views.generic import TemplateView
-from django.utils.encoding import smart_text
 
-from .utils import (content_disposition_filename, make_absolute_paths,
-    wkhtmltopdf)
+from .utils import (content_disposition_filename, render_pdf_from_template)
 
 
 class PDFResponse(HttpResponse):
@@ -65,47 +60,6 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             cmd_options = {}
         self.cmd_options = cmd_options
 
-    def render_to_temporary_file(self, template_name, mode='w+b', bufsize=-1,
-                                 suffix='.html', prefix='tmp', dir=None,
-                                 delete=True):
-        template = self.resolve_template(template_name)
-
-        context = self.resolve_context(self.context_data)
-
-        content = smart_text(template.render(context))
-        content = make_absolute_paths(content)
-
-        try:
-            # Python3 has 'buffering' arg instead of 'bufsize'
-            tempfile = NamedTemporaryFile(mode=mode, buffering=bufsize,
-                                          suffix=suffix, prefix=prefix,
-                                          dir=dir, delete=delete)
-        except TypeError:
-            tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
-                                          suffix=suffix, prefix=prefix,
-                                          dir=dir, delete=delete)
-
-        try:
-            tempfile.write(content.encode('utf-8'))
-            tempfile.flush()
-            return tempfile
-        except:
-            # Clean-up tempfile if an Exception is raised.
-            tempfile.close()
-            raise
-
-    def convert_to_pdf(self, filename,
-                       header_filename=None, footer_filename=None):
-        cmd_options = self.cmd_options.copy()
-        # Clobber header_html and footer_html only if filenames are
-        # provided. These keys may be in self.cmd_options as hardcoded
-        # static files.
-        if header_filename is not None:
-            cmd_options['header_html'] = header_filename
-        if footer_filename is not None:
-            cmd_options['footer_html'] = footer_filename
-        return wkhtmltopdf(pages=[filename], **cmd_options)
-
     @property
     def rendered_content(self):
         """Returns the freshly rendered content for the template and context
@@ -115,42 +69,14 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         response content, you must either call render(), or set the
         content explicitly using the value of this property.
         """
-        debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
-
-        input_file = header_file = footer_file = None
-        header_filename = footer_filename = None
-
-        try:
-            input_file = self.render_to_temporary_file(
-                template_name=self.template_name,
-                prefix='wkhtmltopdf', suffix='.html',
-                delete=(not debug)
-            )
-
-            if self.header_template:
-                header_file = self.render_to_temporary_file(
-                    template_name=self.header_template,
-                    prefix='wkhtmltopdf', suffix='.html',
-                    delete=(not debug)
-                )
-                header_filename = header_file.name
-
-            if self.footer_template:
-                footer_file = self.render_to_temporary_file(
-                    template_name=self.footer_template,
-                    prefix='wkhtmltopdf', suffix='.html',
-                    delete=(not debug)
-                )
-                footer_filename = footer_file.name
-
-            return self.convert_to_pdf(filename=input_file.name,
-                                       header_filename=header_filename,
-                                       footer_filename=footer_filename)
-        finally:
-            # Clean up temporary files
-            for f in filter(None, (input_file, header_file, footer_file)):
-                f.close()
-
+        cmd_options = self.cmd_options.copy()
+        return render_pdf_from_template(
+            self.resolve_template(self.template_name),
+            self.resolve_template(self.header_template),
+            self.resolve_template(self.footer_template),
+            context=self.resolve_context(self.context_data),
+            cmd_options=cmd_options
+        )
 
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
