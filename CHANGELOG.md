@@ -1,6 +1,16 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+2.1.0
+-----
+
+* Move logic from views to `utils` to make it more usable. Adds `convert_to_pdf`,
+`render_pdf_from_template` and `render_to_temporary_file` to `utils`. Removes 
+`render_to_temporary_file` and `convert_to_pdf` from `views.PDFResponse` - thanks johnraz.
+* Enable tests for Django >= 1.7 - thanks timb07
+* Fix to accomodate changes to mod_wsgi v.4.4.14 - thanks powderflask
+* Fix bytes string conversion issue - thanks danielgatis
+
 2.0.3
 --------
 
