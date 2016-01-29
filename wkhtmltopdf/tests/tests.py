@@ -133,11 +133,11 @@ class TestViews(TestCase):
         try:
             import unidecode
         except ImportError:
-            self.assertEqual(response['Content-Disposition'],
-                             'attachment; filename="?.pdf"')
+            filename = '?.pdf'
         else:
-            self.assertEqual(response['Content-Disposition'],
-                             'attachment; filename=".pdf"')
+            filename = '.pdf'
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="{}"'.format(filename))
 
         # Content as a direct output
         response = PDFResponse(content=content, filename="nospace.pdf",
@@ -157,11 +157,11 @@ class TestViews(TestCase):
         try:
             import unidecode
         except ImportError:
-            self.assertEqual(response['Content-Disposition'],
-                             'inline; filename="?.pdf"')
+            filename = '?.pdf'
         else:
-            self.assertEqual(response['Content-Disposition'],
-                             'inline; filename=".pdf"')
+            filename = '.pdf'
+        self.assertEqual(response['Content-Disposition'],
+                         'attachment; filename="{}"'.format(filename))
 
         # Content-Type
         response = PDFResponse(content=content,
