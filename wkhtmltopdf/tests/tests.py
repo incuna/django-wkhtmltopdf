@@ -137,7 +137,7 @@ class TestViews(TestCase):
         else:
             filename = '.pdf'
         self.assertEqual(response['Content-Disposition'],
-                         'attachment; filename="{}"'.format(filename))
+                         'attachment; filename="{0}"'.format(filename))
 
         # Content as a direct output
         response = PDFResponse(content=content, filename="nospace.pdf",
@@ -161,7 +161,7 @@ class TestViews(TestCase):
         else:
             filename = '.pdf'
         self.assertEqual(response['Content-Disposition'],
-                         'attachment; filename="{}"'.format(filename))
+                         'inline; filename="{0}"'.format(filename))
 
         # Content-Type
         response = PDFResponse(content=content,
