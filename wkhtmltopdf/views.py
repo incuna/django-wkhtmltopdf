@@ -75,6 +75,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             self.resolve_template(self.header_template),
             self.resolve_template(self.footer_template),
             context=self.resolve_context(self.context_data),
+            request=self._request,
             cmd_options=cmd_options
         )
 

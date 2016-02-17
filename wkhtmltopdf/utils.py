@@ -8,7 +8,6 @@ import sys
 import shlex
 from tempfile import NamedTemporaryFile
 
-from django.template.context import Context, RequestContext
 from django.utils.encoding import smart_text
 
 try:
@@ -18,7 +17,9 @@ except ImportError:  # Python2
     from urllib import pathname2url
     from urlparse import urljoin
 
+import django
 from django.conf import settings
+from django.template.context import Context, RequestContext
 from django.utils import six
 
 from .subprocess import check_output
@@ -120,7 +121,7 @@ def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_opt
         cmd_options['footer_html'] = footer_filename
     return wkhtmltopdf(pages=[filename], **cmd_options)
 
-def render_pdf_from_template(input_template, header_template, footer_template, context, cmd_options=None):
+def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
     debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
     cmd_options = cmd_options if cmd_options else {}
 
@@ -131,6 +132,7 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
         input_file = render_to_temporary_file(
             template=input_template,
             context=context,
+            request=request,
             prefix='wkhtmltopdf', suffix='.html',
             delete=(not debug)
         )
@@ -139,6 +141,7 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
             header_file = render_to_temporary_file(
                 template=header_template,
                 context=context,
+                request=request,
                 prefix='wkhtmltopdf', suffix='.html',
                 delete=(not debug)
             )
@@ -148,6 +151,7 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
             footer_file = render_to_temporary_file(
                 template=footer_template,
                 context=context,
+                request=request,
                 prefix='wkhtmltopdf', suffix='.html',
                 delete=(not debug)
             )
@@ -231,14 +235,22 @@ def make_absolute_paths(content):
 
     return content
 
-def render_to_temporary_file(template, context, mode='w+b', bufsize=-1,
-                                 suffix='.html', prefix='tmp', dir=None,
-                                 delete=True):
-    # make sure the context is a context object
-    if not isinstance(context, (Context, RequestContext)):
-        context = Context(context)
+def render_to_temporary_file(template, context, request=None, mode='w+b',
+                             bufsize=-1, suffix='.html', prefix='tmp',
+                             dir=None, delete=True):
+    if django.VERSION < (1, 8):
+        # If using a version of Django prior to 1.8, ensure ``context`` is an
+        # instance of ``Context``
+        if not isinstance(context, Context):
+            if request:
+                context = RequestContext(request, context)
+            else:
+                context = Context(context)
+        content = template.render(context)
+    else:
+        content = template.render(context, request)
 
-    content = smart_text(template.render(context))
+    content = smart_text(content)
     content = make_absolute_paths(content)
 
     try:
