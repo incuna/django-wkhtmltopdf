@@ -203,7 +203,8 @@ class TestViews(TestCase):
         self.assertTrue(response.has_header('Content-Disposition'))
 
         footer_template = loader.get_template(self.footer_template)
-        tempfile = render_to_temporary_file(footer_template, context=RequestContext(request, context))
+        tempfile = render_to_temporary_file(footer_template, context=context,
+                                            request=request)
         tempfile.seek(0)
         footer_content = smart_str(tempfile.read())
         footer_content = make_absolute_paths(footer_content)
