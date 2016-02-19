@@ -190,9 +190,11 @@ def http_quote(string):
     if isinstance(string, six.text_type):
         try:
             import unidecode
-            string = bytes(unidecode.unidecode(string), 'ascii')
         except ImportError:
-            string = string.encode('ascii', 'replace')
+            pass
+        else:
+            string = unidecode.unidecode(string)
+        string = string.encode('ascii', 'replace')
     # Wrap in double-quotes for ; , and the like
     string = string.replace(b'\\', b'\\\\').replace(b'"', b'\\"')
     return '"{0!s}"'.format(string.decode())
