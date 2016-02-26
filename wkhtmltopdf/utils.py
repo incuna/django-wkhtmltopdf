@@ -109,7 +109,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     return check_output(ck_args, **ck_kwargs)
 
-def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None):
+def convert_to_pdf(filename_list, header_filename=None, footer_filename=None, cmd_options=None):
     # Clobber header_html and footer_html only if filenames are
     # provided. These keys may be in self.cmd_options as hardcoded
     # static files.
@@ -119,52 +119,65 @@ def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_opt
         cmd_options['header_html'] = header_filename
     if footer_filename is not None:
         cmd_options['footer_html'] = footer_filename
-    return wkhtmltopdf(pages=[filename], **cmd_options)
+    return wkhtmltopdf(pages=filename_list, **cmd_options)
 
-def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
+def create_rendered_file(template, context, request=None):
+    # Create a temporary file of the rendered template with context.
+    # Return the filename for later conversion to PDF.
     debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
-    cmd_options = cmd_options if cmd_options else {}
 
-    input_file = header_file = footer_file = None
-    header_filename = footer_filename = None
+    temporary_file = None
 
     try:
-        input_file = render_to_temporary_file(
-            template=input_template,
+        temporary_file = render_to_temporary_file(
+            template=template,
             context=context,
             request=request,
             prefix='wkhtmltopdf', suffix='.html',
             delete=(not debug)
         )
 
-        if header_template:
-            header_file = render_to_temporary_file(
-                template=header_template,
-                context=context,
-                request=request,
-                prefix='wkhtmltopdf', suffix='.html',
-                delete=(not debug)
-            )
-            header_filename = header_file.name
-
-        if footer_template:
-            footer_file = render_to_temporary_file(
-                template=footer_template,
-                context=context,
-                request=request,
-                prefix='wkhtmltopdf', suffix='.html',
-                delete=(not debug)
-            )
-            footer_filename = footer_file.name
-
-        return convert_to_pdf(filename=input_file.name,
-                              header_filename=header_filename,
-                              footer_filename=footer_filename,
-                              cmd_options=cmd_options)
+        return temporary_file.name
     finally:
         # Clean up temporary files
-        for f in filter(None, (input_file, header_file, footer_file)):
-            f.close()
+        if temporary_file is not None:
+            temporary_file.close()
+
+def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
+    # For basic usage. Performs all the actions necessary to create a single
+    # page PDF from a single template and context.
+    cmd_options = cmd_options if cmd_options else {}
+
+    input_filename = header_filename = footer_filename = None
+
+    # Main contemt.
+    input_filename = create_rendered_file(
+        template=input_template,
+        context=context,
+        request=request
+    )
+
+    # Optional. For header template argument.
+    if header_template:
+        header_filename = create_rendered_file(
+            template=header_temlate,
+            context=context,
+            request=request
+        )
+
+    # Optional. For footer template argument.
+    if footer_template:
+        footer_filename = create_rendered_file(
+            template=footer_template,
+            context=context,
+            request=request
+        )
+
+    return convert_to_pdf(filename_list=[input_filename],
+                          header_filename=header_filename,
+                          footer_filename=footer_filename,
+                          cmd_options=cmd_options)
+
 
 def content_disposition_filename(filename):
     """
