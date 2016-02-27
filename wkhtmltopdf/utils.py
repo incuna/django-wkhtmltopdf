@@ -134,18 +134,14 @@ class RenderedFile(object):
     def __init__(self, template, context, request=None):
         debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
 
-        try:
-            self.temporary_file = render_to_temporary_file(
-                template=template,
-                context=context,
-                request=request,
-                prefix='wkhtmltopdf', suffix='.html',
-                delete=(not debug)
-            )
-            self.filename = self.temporary_file.name
-        except:
-            # In case something fails, return an empty filename string.
-            self.filename = ''
+        self.temporary_file = render_to_temporary_file(
+            template=template,
+            context=context,
+            request=request,
+            prefix='wkhtmltopdf', suffix='.html',
+            delete=(not debug)
+        )
+        self.filename = self.temporary_file.name
 
     def __del__(self):
         # Always close the temporary_file on object destruction.
