@@ -14,7 +14,8 @@ from django.utils.encoding import smart_str
 
 from wkhtmltopdf.subprocess import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
-                               wkhtmltopdf, render_to_temporary_file)
+                               wkhtmltopdf, render_to_temporary_file,
+                               RenderedFile)
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
@@ -29,6 +30,7 @@ class UnicodeContentPDFTemplateView(PDFTemplateView):
         context = Base.get_context_data(**kwargs)
         context['title'] = u'♥'
         return context
+
 
 class TestUtils(TestCase):
     def setUp(self):
@@ -93,6 +95,28 @@ class TestUtils(TestCase):
         saved_content = smart_str(temp_file.read())
         self.assertTrue(title in saved_content)
         temp_file.close()
+
+    def _render_file(self, template, context):
+        """Helper method for test_rendered_filed_deletion test."""
+        render = RenderedFile(template=template, context=context)
+        render.temporary_file.seek(0)
+        saved_content = smart_str(render.temporary_file.read())
+
+        return (saved_content, render.filename)
+
+    def test_rendered_filed_deletion(self):
+        """If WKHTMLTOPDF_DEBUG=False, delete rendered file on object close."""
+        title = 'A test template.'
+        template = loader.get_template('sample.html')
+        debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
+
+        saved_content, filename = self._render_file(template=template,
+                                                    context={'title': title})
+        # First verify temp file was actually rendered.
+        self.assertTrue(title in saved_content)
+
+        # Then check if file is deleted when DEBUG=False.
+        self.assertEqual(os.path.isfile(filename), debug)
 
 
 class TestViews(TestCase):
