@@ -113,8 +113,8 @@ def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_opt
     # Clobber header_html and footer_html only if filenames are
     # provided. These keys may be in self.cmd_options as hardcoded
     # static files.
-    # The argument `filename` should be a list. However, wkhtmltopdf will
-    # coerce into a list if a string is passed.
+    # The argument `filename` may be a string or a list. However, wkhtmltopdf
+    # will coerce it into a list if a string is passed.
     cmd_options = cmd_options if cmd_options else {}
 
     if header_filename is not None:
@@ -180,7 +180,7 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
         )
         footer_filename = footer_file.filename
 
-    return convert_to_pdf(filename=[input_file.filename],
+    return convert_to_pdf(filename=input_file.filename,
                           header_filename=header_filename,
                           footer_filename=footer_filename,
                           cmd_options=cmd_options)
