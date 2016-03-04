@@ -14,7 +14,8 @@ from django.utils.encoding import smart_str
 
 from wkhtmltopdf.subprocess import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
-                               wkhtmltopdf, render_to_temporary_file)
+                               wkhtmltopdf, render_to_temporary_file,
+                               RenderedFile)
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
@@ -29,6 +30,7 @@ class UnicodeContentPDFTemplateView(PDFTemplateView):
         context = Base.get_context_data(**kwargs)
         context['title'] = u'♥'
         return context
+
 
 class TestUtils(TestCase):
     def setUp(self):
@@ -93,6 +95,45 @@ class TestUtils(TestCase):
         saved_content = smart_str(temp_file.read())
         self.assertTrue(title in saved_content)
         temp_file.close()
+
+    def _render_file(self, template, context):
+        """Helper method for testing rendered file deleted/persists tests."""
+        render = RenderedFile(template=template, context=context)
+        render.temporary_file.seek(0)
+        saved_content = smart_str(render.temporary_file.read())
+
+        return (saved_content, render.filename)
+
+    def test_rendered_file_deleted_on_production(self):
+        """If WKHTMLTOPDF_DEBUG=False, delete rendered file on object close."""
+        title = 'A test template.'
+        template = loader.get_template('sample.html')
+        debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
+
+        saved_content, filename = self._render_file(template=template,
+                                                    context={'title': title})
+        # First verify temp file was rendered correctly.
+        self.assertTrue(title in saved_content)
+
+        # Then check if file is deleted when debug=False.
+        self.assertFalse(debug)
+        self.assertFalse(os.path.isfile(filename))
+
+    def test_rendered_file_persists_on_debug(self):
+        """If WKHTMLTOPDF_DEBUG=True, the rendered file should persist."""
+        title = 'A test template.'
+        template = loader.get_template('sample.html')
+        with self.settings(WKHTMLTOPDF_DEBUG=True):
+            debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
+
+            saved_content, filename = self._render_file(template=template,
+                                                    context={'title': title})
+            # First verify temp file was rendered correctly.
+            self.assertTrue(title in saved_content)
+
+            # Then check if file persists when debug=True.
+            self.assertTrue(debug)
+            self.assertTrue(os.path.isfile(filename))
 
 
 class TestViews(TestCase):

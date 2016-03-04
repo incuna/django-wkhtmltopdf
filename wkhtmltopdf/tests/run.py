@@ -10,7 +10,7 @@ DIRNAME = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.getcwd())
 
 settings.configure(
-    DEBUG=True,
+    DEBUG=False,
     DATABASES={
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -29,7 +29,7 @@ settings.configure(
     MEDIA_URL='/media/',
     STATIC_ROOT=os.path.join(DIRNAME, 'static'),
     STATIC_URL='/static/',
-    WKHTMLTOPDF_DEBUG=True,
+    WKHTMLTOPDF_DEBUG=False,
 )
 
 try:
