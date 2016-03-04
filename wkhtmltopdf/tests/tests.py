@@ -97,14 +97,14 @@ class TestUtils(TestCase):
         temp_file.close()
 
     def _render_file(self, template, context):
-        """Helper method for test_rendered_filed_deletion test."""
+        """Helper method for testing rendered file deleted/persists tests."""
         render = RenderedFile(template=template, context=context)
         render.temporary_file.seek(0)
         saved_content = smart_str(render.temporary_file.read())
 
         return (saved_content, render.filename)
 
-    def test_rendered_filed_deletion(self):
+    def test_rendered_file_deleted_on_production(self):
         """If WKHTMLTOPDF_DEBUG=False, delete rendered file on object close."""
         title = 'A test template.'
         template = loader.get_template('sample.html')
@@ -112,11 +112,28 @@ class TestUtils(TestCase):
 
         saved_content, filename = self._render_file(template=template,
                                                     context={'title': title})
-        # First verify temp file was actually rendered.
+        # First verify temp file was rendered correctly.
         self.assertTrue(title in saved_content)
 
-        # Then check if file is deleted when DEBUG=False.
-        self.assertEqual(os.path.isfile(filename), debug)
+        # Then check if file is deleted when debug=False.
+        self.assertFalse(debug)
+        self.assertFalse(os.path.isfile(filename))
+
+    def test_rendered_file_persists_on_debug(self):
+        """If WKHTMLTOPDF_DEBUG=True, the rendered file should persist."""
+        title = 'A test template.'
+        template = loader.get_template('sample.html')
+        with self.settings(WKHTMLTOPDF_DEBUG=True):
+            debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
+
+            saved_content, filename = self._render_file(template=template,
+                                                    context={'title': title})
+            # First verify temp file was rendered correctly.
+            self.assertTrue(title in saved_content)
+
+            # Then check if file persists when debug=True.
+            self.assertTrue(debug)
+            self.assertTrue(os.path.isfile(filename))
 
 
 class TestViews(TestCase):
