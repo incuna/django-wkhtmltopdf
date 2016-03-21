@@ -11,7 +11,7 @@ class PDFResponse(HttpResponse):
     """HttpResponse that sets the headers for PDF output."""
 
     def __init__(self, content, status=200, content_type=None,
-            filename=None, show_content_in_browser=None, *args, **kwargs):
+                 filename=None, show_content_in_browser=None, *args, **kwargs):
 
         if content_type is None:
             content_type = 'application/pdf'
@@ -78,6 +78,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             request=self._request,
             cmd_options=cmd_options
         )
+
 
 class PDFTemplateView(TemplateView):
     """Class-based view for HTML templates rendered to PDF."""
