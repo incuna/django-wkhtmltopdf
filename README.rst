@@ -9,9 +9,9 @@ django-wkhtmltopdf
    :target: https://travis-ci.org/incuna/django-wkhtmltopdf
    :alt: Travis-CI
 
-.. image:: https://pypip.in/d/django-wkhtmltopdf/badge.png
-    :target: https://crate.io/packages/django-wkhtmltopdf/
-    :alt: Number of PyPI downloads
+.. image:: https://img.shields.io/pypi/dm//django-wkhtmltopdf.svg
+    :target: https://badge.fury.io/py/django-wkhtmltopdf
+    :alt: Number of PyPI downloads on a month
 
 
 Converts HTML to PDF
