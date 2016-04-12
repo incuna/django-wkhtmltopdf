@@ -292,3 +292,6 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
         # Clean-up tempfile if an Exception is raised.
         tempfile.close()
         raise
+
+
+DjangoWkhtmlToPDFRemovedInNextVersionWarning = PendingDeprecationWarning
