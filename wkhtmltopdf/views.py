@@ -73,9 +73,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
         """
         cmd_options = self.cmd_options.copy()
         return render_pdf_from_template(
-            self.resolve_template(self.template_name),
-            self.resolve_template(self.header_template),
-            self.resolve_template(self.footer_template),
+            input_template=self.resolve_template(self.template_name),
+            header_template=self.resolve_template(self.header_template),
+            footer_template=self.resolve_template(self.footer_template),
             context=self.resolve_context(self.context_data),
             request=self._request,
             cmd_options=cmd_options
@@ -85,7 +85,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 class PDFRenderMixin(object):
     """Class-based view for HTML templates rendered to PDF."""
 
-    default_is_pdf_response = True
+    pdf_default_response_is_pdf = False
     # Filename for downloaded PDF. If None, the response is inline.
     filename = 'rendered_pdf.pdf'
 
@@ -148,33 +148,32 @@ class PDFRenderMixin(object):
                 "{0}.pdf_response_class requires either a subclass of PDFTemplateResponse".format(
                     self.__class__.__name__))
         else:
-            if self.default_is_pdf_response:
-                if filename is None:
-                    filename = self.get_filename()
+            if filename is None:
+                filename = self.get_filename()
 
-                if cmd_options is None:
-                    cmd_options = self.get_cmd_options()
+            if cmd_options is None:
+                cmd_options = self.get_cmd_options()
 
-                return self.pdf_response_class(
-                    request=self.request,
-                    template=self.get_pdf_template_name(),
-                    context=context, filename=filename,
-                    show_content_in_browser=self.show_content_in_browser,
-                    header_template=self.get_pdf_header_template(),
-                    footer_template=self.get_pdf_footer_template(),
-                    cmd_options=cmd_options,
-                    **response_kwargs
-                )
+            return self.pdf_response_class(
+                request=self.request,
+                template=self.get_pdf_template_name(),
+                context=context, filename=filename,
+                show_content_in_browser=self.show_content_in_browser,
+                header_template=self.get_pdf_header_template(),
+                footer_template=self.get_pdf_footer_template(),
+                cmd_options=cmd_options,
+                **response_kwargs
+            )
 
     def render_to_response(self, context, **response_kwargs):
-        if self.request.GET.get('as', None) == 'pdf':
-            # Use the html_response_class if HTML was requested.
+        if self.request.GET.get('as', None) == 'pdf' or self.pdf_default_response_is_pdf:
             return self.render_pdf_to_response(context, **response_kwargs)
         else:
             return super(PDFRenderMixin, self).render_to_response(context, **response_kwargs)
 
 
 class PDFTemplateView(PDFRenderMixin, TemplateView):
+    #pdf_default_response_is_pdf = False
     header_template = None
     footer_template = None
 
