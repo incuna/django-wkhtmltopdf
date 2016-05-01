@@ -1,17 +1,28 @@
+import re
+import ast
 from setuptools import setup, find_packages
 
-import wkhtmltopdf
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+_author_re = re.compile(r'__author__\s+=\s+(.*)')
+
+with open('wkhtmltopdf/__init__.py', 'rb') as f:
+    content = f.read().decode('utf-8')
+    version = str(ast.literal_eval(_version_re.search(
+        content).group(1)))
+    author = str(ast.literal_eval(_author_re.search(
+        content).group(1)))
 
 
 setup(
     name='django-wkhtmltopdf',
     packages=find_packages(),
     include_package_data=True,
-    version=wkhtmltopdf.__version__,
+    version=version,
     description='Converts HTML to PDF using wkhtmltopdf.',
     long_description=open('README.rst').read(),
     license='MIT',
-    author=wkhtmltopdf.__author__,
+    author=author,
     author_email='admin@incuna.com',
     url='https://github.com/incuna/django-wkhtmltopdf',
     zip_safe=False,
