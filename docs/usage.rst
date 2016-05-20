@@ -6,14 +6,14 @@ By default, it uses :py:class:`PDFTemplateResponse` to render an HTML
 template to PDF.
 It accepts the following class attributes:
 
-:py:attr:`template_name`
+:py:attr:`pdf_template_name`
     The full name of a template to use as the body of the PDF.
 
-:py:attr:`header_template`
+:py:attr:`pdf_header_template`
     Optional.
     The full name of a template to use as the header on each page.
 
-:py:attr:`footer_template`
+:py:attr:`pdf_footer_template`
     Optional.
     The full name of a template to use as the footer on each page.
 
@@ -25,8 +25,8 @@ It accepts the following class attributes:
     If ``None``, the view returns the PDF output inline,
     not as an attachment.
 
-:py:attr:`response_class`
-    The response class to be returned by :py:meth:`render_to_response`
+:py:attr:`pdf_response_class`
+    The response class to be returned by :py:meth:`render_pdf_to_response`
     method.
     Default is :py:class:`PDFTemplateResponse`.
 
@@ -43,6 +43,12 @@ It accepts the following class attributes:
 
     wkhtmltopdf options can be found by running ``wkhtmltopdf --help``.
     Unfortunately they don't provide hosted documentation.
+
+:py:attr:`pdf_default_response_is_pdf`
+    Default is ``True``.
+
+    if ``False`` the PDF only is rendered if ``?as=pdf`` GET arg was passed to end
+    of your URL
 
 .. note::
 
@@ -64,6 +70,7 @@ Point a URL at :py:class:`PDFTemplateView`:
     urlpatterns = patterns('',
         # ...
         url(r'^pdf/$', PDFTemplateView.as_view(template_name='my_template.html',
+                                               pdf_template_name='my_pdf_template.html',
                                                filename='my_pdf.pdf'), name='pdf'),
         # ...
     )
@@ -83,10 +90,16 @@ and override the sections you need to.
 
     class MyPDF(PDFTemplateView):
         filename = 'my_pdf.pdf'
-        template_name = 'my_template.html'
+        pdf_template_name = 'my_template.html'
+        pdf_footer_template = 'my_default_footer_template.html'
         cmd_options = {
             'margin-top': 3,
         }
+
+        def get_pdf_footer_template(self):
+            if self.request.user.is_authenticated():
+                return 'my_user_authenticated_footer_template.html'
+            return self.pdf_footer_template
 
 Unicode characters
 ------------------

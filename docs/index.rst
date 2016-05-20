@@ -38,6 +38,7 @@ Grab the wkhtmltopdf binary_ for your platform.
 
     urlpatterns = patterns('',
         url(r'^pdf/$', PDFTemplateView.as_view(template_name='my_template.html',
+                                               pdf_template_name='my_pdf_template.html',
                                                filename='my_pdf.pdf'), name='pdf'),
     )
 

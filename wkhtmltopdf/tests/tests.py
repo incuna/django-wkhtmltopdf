@@ -138,7 +138,8 @@ class TestUtils(TestCase):
 
 class TestViews(TestCase):
     template = 'sample.html'
-    footer_template = 'footer.html'
+    pdf_template = 'sample.html'
+    pdf_footer_template = 'footer.html'
     pdf_filename = 'output.pdf'
     attached_fileheader = 'attachment; filename="{0}"'
     inline_fileheader = 'inline; filename="{0}"'
@@ -215,11 +216,11 @@ class TestViews(TestCase):
         context = {'title': 'Heading'}
         request = RequestFactory().get('/')
         response = PDFTemplateResponse(request=request,
-                                       template=self.template,
+                                       template=self.pdf_template,
                                        context=context,
                                        show_content_in_browser=show_content)
         self.assertEqual(response._request, request)
-        self.assertEqual(response.template_name, self.template)
+        self.assertEqual(response.template_name, self.pdf_template)
         self.assertEqual(response.context_data, context)
         self.assertEqual(response.filename, None)
         self.assertEqual(response.header_template, None)
@@ -228,7 +229,7 @@ class TestViews(TestCase):
         self.assertFalse(response.has_header('Content-Disposition'))
 
         # Render to temporary file
-        template = loader.get_template(self.template)
+        template = loader.get_template(self.pdf_template)
         tempfile = render_to_temporary_file(template, context=context)
         tempfile.seek(0)
         html_content = smart_str(tempfile.read())
@@ -243,19 +244,19 @@ class TestViews(TestCase):
         # Footer
         cmd_options = {'title': 'Test PDF'}
         response = PDFTemplateResponse(request=request,
-                                       template=self.template,
+                                       template=self.pdf_template,
                                        context=context,
                                        filename=self.pdf_filename,
                                        show_content_in_browser=show_content,
-                                       footer_template=self.footer_template,
+                                       footer_template=self.pdf_footer_template,
                                        cmd_options=cmd_options)
         self.assertEqual(response.filename, self.pdf_filename)
         self.assertEqual(response.header_template, None)
-        self.assertEqual(response.footer_template, self.footer_template)
+        self.assertEqual(response.footer_template, self.pdf_footer_template)
         self.assertEqual(response.cmd_options, cmd_options)
         self.assertTrue(response.has_header('Content-Disposition'))
 
-        footer_template = loader.get_template(self.footer_template)
+        footer_template = loader.get_template(self.pdf_footer_template)
         tempfile = render_to_temporary_file(footer_template, context=context,
                                             request=request)
         tempfile.seek(0)
@@ -281,7 +282,8 @@ class TestViews(TestCase):
         view = PDFTemplateView.as_view(filename=self.pdf_filename,
                                        show_content_in_browser=show_content,
                                        template_name=self.template,
-                                       footer_template=self.footer_template)
+                                       pdf_template_name=self.pdf_template,
+                                       pdf_footer_template=self.pdf_footer_template)
 
         # As PDF
         request = RequestFactory().get('/')
@@ -318,7 +320,8 @@ class TestViews(TestCase):
         view = UnicodeContentPDFTemplateView.as_view(
             filename=self.pdf_filename,
             show_content_in_browser=show_content,
-            template_name=self.template
+            template_name=self.template,
+            pdf_template_name=self.pdf_template
         )
 
         # As PDF
