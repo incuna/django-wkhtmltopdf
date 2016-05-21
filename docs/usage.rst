@@ -90,7 +90,8 @@ and override the sections you need to.
 
     class MyPDF(PDFTemplateView):
         filename = 'my_pdf.pdf'
-        pdf_template_name = 'my_template.html'
+        template_name = 'my_template.html'
+        pdf_template_name = 'my_pdf_template.html'
         pdf_footer_template = 'my_default_footer_template.html'
         cmd_options = {
             'margin-top': 3,
