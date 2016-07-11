@@ -24,6 +24,20 @@ from django.utils import six
 
 from .subprocess import check_output
 
+__all__ = (
+    '_options_to_args',
+    'wkhtmltopdf',
+    'convert_to_pdf',
+    'RenderedFile',
+    'render_pdf_from_template',
+    'content_disposition_filename',
+    'http_quote',
+    'pathname2fileurl',
+    'make_absolute_paths',
+    'render_to_temporary_file',
+    'DjangoWkhtmlToPDFRemovedInNextVersionWarning',
+)
+
 
 def _options_to_args(**options):
     """Converts ``options`` into a list of command-line arguments."""
