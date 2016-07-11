@@ -6,6 +6,8 @@ Changelog for django-wkhtmltopdf
 
 This release is identical to `2.1.0`, but with a major version bump to reflect the backwards-incompatible changes.
 
+* improvement in setup.py to get version and author, without directly import wkhtmltopdf module
+
 2.1.0
 -----
 

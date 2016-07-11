@@ -1,17 +1,38 @@
+import io
+import os
+import re
+import sys
+
 from setuptools import setup, find_packages
 
-import wkhtmltopdf
 
+def get_version_and_author(*file_paths):
+    filename = os.path.join(os.path.dirname(__file__), *file_paths)
+    with open(filename) as a_file:
+        file_content = a_file.read()
+        version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                                  file_content, re.M)
+        author_match = re.search(r"^__author__ = ['\"]([^'\"]*)['\"]",
+                                 file_content, re.M)
+        if version_match and author_match:
+            return version_match.group(1), author_match.group(1)
+    raise RuntimeError('Unable to find version and/or author string.')
+
+
+VERSION, AUTHOR = get_version_and_author('wkhtmltopdf', '__init__.py')
+
+with io.open('README.rst', encoding='utf8') as readme_file:
+    README = readme_file.read()  # NOQA
 
 setup(
     name='django-wkhtmltopdf',
     packages=find_packages(),
     include_package_data=True,
-    version=wkhtmltopdf.__version__,
+    version=VERSION,
     description='Converts HTML to PDF using wkhtmltopdf.',
-    long_description=open('README.rst').read(),
+    long_description=README,
     license='MIT',
-    author=wkhtmltopdf.__author__,
+    author=AUTHOR,
     author_email='admin@incuna.com',
     url='https://github.com/incuna/django-wkhtmltopdf',
     zip_safe=False,
@@ -31,3 +52,4 @@ setup(
     ],
     keywords='django wkhtmltopdf pdf',
 )
+
