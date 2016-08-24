@@ -1,3 +1,4 @@
-<script src="{{ STATIC_URL }}sample_js_not_existing.js"></script>
+{% load static %}
+<script src="{% static 'sample_js_not_existing.js' %}"></script>
 
-<img src="{{ MEDIA_URL }}sample_image_not_existing.png" />
+<img src="{% get_media_prefix %}sample_image_not_existing.png" />

@@ -49,7 +49,6 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                                                   context=context,
                                                   status=status,
                                                   content_type=content_type,
-                                                  current_app=None,
                                                   *args, **kwargs)
         self.set_filename(filename, show_content_in_browser)
 
