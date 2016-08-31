@@ -1,6 +1,15 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+3.1.0
+-----
+
+* Remove kwarg `current_app=None`.
+* Fix download information badget on `README.rst`.
+* Refactor to better support multiple pages.
+* Remove dependency on Django template engine.
+* Fix unidecode bytes error on python2.
+
 3.0.0
 -----
 
