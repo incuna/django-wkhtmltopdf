@@ -31,6 +31,14 @@ settings.configure(
     MEDIA_URL='/media/',
     STATIC_ROOT=os.path.join(DIRNAME, 'static'),
     STATIC_URL='/static/',
+    TEMPLATES = [  # For Django >= 1.10. Ignored in lower versions
+        {
+            'BACKEND': 'django.template.backends.django.DjangoTemplates',
+            'APP_DIRS': True,
+            'DIRS': [],
+            'OPTIONS': {},
+        },
+    ],
     WKHTMLTOPDF_DEBUG=False,
 )
 
