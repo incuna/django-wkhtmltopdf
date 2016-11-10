@@ -10,7 +10,7 @@ setup(
     version=wkhtmltopdf.__version__,
     description='Converts HTML to PDF using wkhtmltopdf.',
     long_description=open('README.rst').read(),
-    license='MIT',
+    license='BSD-2-Clause',
     author=wkhtmltopdf.__author__,
     author_email='admin@incuna.com',
     url='https://github.com/incuna/django-wkhtmltopdf',
