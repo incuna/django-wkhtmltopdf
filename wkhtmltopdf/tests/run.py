@@ -53,7 +53,7 @@ except ImportError:
     from discover_runner.runner import DiscoverRunner
 
 
-test_runner = DiscoverRunner(verbosity=1)
+test_runner = DiscoverRunner(verbosity=2)
 failures = test_runner.run_tests(['wkhtmltopdf'])
 if failures:
     sys.exit(1)

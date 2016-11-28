@@ -283,7 +283,17 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
         tempfile = NamedTemporaryFile(mode=mode, bufsize=bufsize,
                                       suffix=suffix, prefix=prefix,
                                       dir=dir, delete=delete)
-
+                                      
+    
+    try:
+        from django.conf import settings
+        if settings.DEBUG:
+            print('\n\n')
+            print(content.encode('utf-8'))
+            print('\n\n')
+    except:
+        pass
+    
     try:
         tempfile.write(content.encode('utf-8'))
         tempfile.flush()
@@ -292,3 +302,6 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
         # Clean-up tempfile if an Exception is raised.
         tempfile.close()
         raise
+
+
+DjangoWkhtmlToPDFRemovedInNextVersionWarning = PendingDeprecationWarning
