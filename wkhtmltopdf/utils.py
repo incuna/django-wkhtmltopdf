@@ -237,7 +237,12 @@ def make_absolute_paths(content):
         settings.STATIC_URL,
     ]
 
+    has_scheme = re.compile(r'^[^:/]+://')
+
     for x in overrides:
+        if has_scheme.match(x):
+            continue
+
         occur_pattern = '''["|']({0}.*?)["|']'''
         occurences = re.findall(occur_pattern.format(x), content)
         occurences = list(set(occurences))  # Remove dups
