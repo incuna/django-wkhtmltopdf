@@ -246,7 +246,8 @@ def make_absolute_paths(content):
             filename = occur[len(x):]
             pathname = finders.find(filename, all=False)
 
-            content = content.replace(occur, pathname2fileurl(pathname))
+            if pathname:
+                content = content.replace(occur, pathname2fileurl(pathname))
 
     return content
 
