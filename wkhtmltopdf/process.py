@@ -25,7 +25,7 @@ def check_output(*popenargs, **kwargs):
     Calling check_output without the ignore_404 keyword argument
     will raise a CalledProcessError if wkhtmltopdf exits with a non-zero code
 
-    >>> check_output(['wkhtmltopdf',             #doctest: +ELLIPSIS
+    >>> check_output(['wkhtmltopdf',               #doctest: +ELLIPSIS
     ...               '--quiet',
     ...               '--encoding', 'utf8',
     ...               os.getenv('WKHTML_IN'), os.getenv('WKHTML_OUT')])
@@ -36,21 +36,21 @@ def check_output(*popenargs, **kwargs):
     Calling check_output WITH the ignore_404 keyword will not raise
     the CalledProcessError, but only if the error == ContentNotFoundError
 
-    >>> check_output(['wkhtmltopdf',
+    >>> check_output(['/usr/local/bin/wkhtmltopdf',
     ...               '--quiet',
     ...               '--encoding', 'utf8',
     ...               os.getenv('WKHTML_IN'), os.getenv('WKHTML_OUT')],
-    ...               ignore_404=True)
+    ...               env={'ignore_404': True})
     ''
 
     Calling check_output WITH the ignore_404 keyword should still
     raise a CalledProcessError if the error != ContentNotFoundError
 
-    >>> check_output(['wkhtmltopdf',            #doctest: +ELLIPSIS
+    >>> check_output(['/usr/local/bin/wkhtmltopdf', #doctest: +ELLIPSIS
     ...               '--blaa',
     ...               '--encoding', 'utf8',
     ...               os.getenv('WKHTML_IN'), os.getenv('WKHTML_OUT')],
-    ...               ignore_404=True)
+    ...               env={'ignore_404': True})
     Traceback (most recent call last):
     ...
     CalledProcessError...
@@ -58,7 +58,10 @@ def check_output(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
 
-    ignore_404 = kwargs.pop('ignore_404', False)
+    if 'env' in kwargs:
+        ignore_404 = kwargs['env'].pop('ignore_404', False)
+    else:
+        ignore_404 = False
 
     if not kwargs.get('stderr'):
         kwargs['stderr'] = PIPE
