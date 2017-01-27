@@ -63,15 +63,13 @@ def check_output(*popenargs, **kwargs):
     else:
         ignore_404 = False
 
-    if not kwargs.get('stderr'):
-        kwargs['stderr'] = PIPE
-
+    kwargs.setdefault('stderr', PIPE)
     process = Popen(stdout=PIPE, *popenargs, **kwargs)
     output, error_message = process.communicate()
     retcode = process.poll()
 
     if retcode:
-        if ignore_404:
+        if error_message and ignore_404:
             if 'ContentNotFoundError' in error_message:
                 return output
         cmd = kwargs.get("args")
