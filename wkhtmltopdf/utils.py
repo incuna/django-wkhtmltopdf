@@ -22,7 +22,7 @@ from django.conf import settings
 from django.template.context import Context, RequestContext
 from django.utils import six
 
-from .subprocess import check_output
+from .process import check_output
 
 
 def _options_to_args(**options):
