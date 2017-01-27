@@ -99,13 +99,6 @@ def wkhtmltopdf(pages, output=None, **kwargs):
                          list(pages),
                          [output]))
     ck_kwargs = {'env': env}
-    # Handling of fileno() attr. based on https://github.com/GrahamDumpleton/mod_wsgi/issues/85
-    try:
-        i = sys.stderr.fileno()
-        ck_kwargs['stderr'] = sys.stderr
-    except (AttributeError, IOError):
-        # can't call fileno() on mod_wsgi stderr object
-        pass
 
     return check_output(ck_args, **ck_kwargs)
 
