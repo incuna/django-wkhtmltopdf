@@ -58,7 +58,7 @@ def check_output(*popenargs, **kwargs):
     if 'stdout' in kwargs:
         raise ValueError('stdout argument not allowed, it will be overridden.')
 
-    if 'env' in kwargs:
+    if kwargs.get('env'):
         ignore_404 = kwargs['env'].pop('ignore_404', False)
     else:
         ignore_404 = False
