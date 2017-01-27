@@ -12,7 +12,7 @@ from django.test.client import RequestFactory
 from django.utils import six
 from django.utils.encoding import smart_str
 
-from wkhtmltopdf.subprocess import CalledProcessError
+from wkhtmltopdf.process import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
                                wkhtmltopdf, render_to_temporary_file,
                                RenderedFile)
