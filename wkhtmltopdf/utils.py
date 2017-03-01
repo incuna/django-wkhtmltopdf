@@ -32,6 +32,10 @@ def _options_to_args(**options):
         value = options[name]
         if value is None:
             continue
+        if name == 'cookie' and hasattr(value, 'iteritems'):
+            for key, data in value.iteritems():
+                flags.extend(['--cookie', key, data])
+            continue
         flags.append('--' + name.replace('_', '-'))
         if value is not True:
             flags.append(six.text_type(value))
