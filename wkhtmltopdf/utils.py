@@ -34,6 +34,7 @@ def _options_to_args(**options):
             continue
         flags.append('--' + name.replace('_', '-'))
         if value is not True:
+            # if quiet=False, do not include in command string
             if name == 'quiet':
                 continue
             flags.append(six.text_type(value))
