@@ -24,6 +24,29 @@ from django.utils import six
 
 from .subprocess import check_output
 
+NO_ARGUMENT_OPTIONS = ['--collate', '--no-collate', '-H', '--extended-help', '-g',
+                       '--grayscale', '-h', '--help', '--htmldoc', '--license', '-l',
+                       '--lowquality', '--manpage', '--no-pdf-compression', '-q',
+                       '--quiet', '--read-args-from-stdin', '--readme',
+                       '--use-xserver', '-V', '--version', '--dump-default-toc-xsl',
+                       '--outline', '--no-outline', '--background', '--no-background',
+                       '--custom-header-propagation', '--no-custom-header-propagation',
+                       '--debug-javascript', '--no-debug-javascript', '--default-header',
+                       '--disable-external-links', '--enable-external-links',
+                       '--disable-forms', '--enable-forms', '--images', '--no-images',
+                       '--disable-internal-links', '--enable-internal-links', '-n',
+                       '--disable-javascript', '--enable-javascript', '--keep-relative-links',
+                       '--load-error-handling', '--load-media-error-handling',
+                       '--disable-local-file-access', '--enable-local-file-access',
+                       '--exclude-from-outline', '--include-in-outline', '--disable-plugins',
+                       '--enable-plugins', '--print-media-type', '--no-print-media-type',
+                       '--resolve-relative-links', '--disable-smart-shrinking',
+                       '--enable-smart-shrinking', '--stop-slow-scripts',
+                       '--no-stop-slow-scripts', '--disable-toc-back-links',
+                       '--enable-toc-back-links', '--footer-line', '--no-footer-line',
+                       '--header-line', '--no-header-line', '--disable-dotted-lines',
+                       '--disable-toc-links']
+
 
 def _options_to_args(**options):
     """Converts ``options`` into a list of command-line arguments."""
@@ -33,11 +56,9 @@ def _options_to_args(**options):
         if value is None:
             continue
         flags.append('--' + name.replace('_', '-'))
-        if value is not True:
-            # if quiet=False, do not include in command string
-            if name == 'quiet':
-                continue
-            flags.append(six.text_type(value))
+        if value is False and name in NO_ARGUMENT_OPTIONS:
+            continue
+        flags.append(six.text_type(value))
     return flags
 
 
