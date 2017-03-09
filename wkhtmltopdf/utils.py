@@ -45,18 +45,24 @@ NO_ARGUMENT_OPTIONS = ['--collate', '--no-collate', '-H', '--extended-help', '-g
                        '--no-stop-slow-scripts', '--disable-toc-back-links',
                        '--enable-toc-back-links', '--footer-line', '--no-footer-line',
                        '--header-line', '--no-header-line', '--disable-dotted-lines',
-                       '--disable-toc-links']
+                       '--disable-toc-links', '--verbose']
 
 
 def _options_to_args(**options):
-    """Converts ``options`` into a list of command-line arguments."""
+    """
+    Converts ``options`` into a list of command-line arguments.
+    Skip arguments where no value is provided
+    For flag-type (No argument) variables, pass only the name and only then if the value is True
+    """
     flags = []
     for name in sorted(options):
         value = options[name]
-        if value is None:
+        formatted_flag = '--%s' % name if len(name) > 1 else '-%s' % name
+        accepts_no_arguments = formatted_flag in NO_ARGUMENT_OPTIONS
+        if value is None or (value is False and accepts_no_arguments):
             continue
         flags.append('--' + name.replace('_', '-'))
-        if value is False and name in NO_ARGUMENT_OPTIONS:
+        if accepts_no_arguments:
             continue
         flags.append(six.text_type(value))
     return flags
