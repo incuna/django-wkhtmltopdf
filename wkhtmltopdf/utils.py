@@ -58,10 +58,11 @@ def _options_to_args(**options):
     for name in sorted(options):
         value = options[name]
         formatted_flag = '--%s' % name if len(name) > 1 else '-%s' % name
+        formatted_flag = formatted_flag.replace('_', '-')
         accepts_no_arguments = formatted_flag in NO_ARGUMENT_OPTIONS
         if value is None or (value is False and accepts_no_arguments):
             continue
-        flags.append('--' + name.replace('_', '-'))
+        flags.append(formatted_flag)
         if accepts_no_arguments:
             continue
         flags.append(six.text_type(value))
