@@ -24,17 +24,48 @@ from django.utils import six
 
 from .subprocess import check_output
 
+NO_ARGUMENT_OPTIONS = ['--collate', '--no-collate', '-H', '--extended-help', '-g',
+                       '--grayscale', '-h', '--help', '--htmldoc', '--license', '-l',
+                       '--lowquality', '--manpage', '--no-pdf-compression', '-q',
+                       '--quiet', '--read-args-from-stdin', '--readme',
+                       '--use-xserver', '-V', '--version', '--dump-default-toc-xsl',
+                       '--outline', '--no-outline', '--background', '--no-background',
+                       '--custom-header-propagation', '--no-custom-header-propagation',
+                       '--debug-javascript', '--no-debug-javascript', '--default-header',
+                       '--disable-external-links', '--enable-external-links',
+                       '--disable-forms', '--enable-forms', '--images', '--no-images',
+                       '--disable-internal-links', '--enable-internal-links', '-n',
+                       '--disable-javascript', '--enable-javascript', '--keep-relative-links',
+                       '--load-error-handling', '--load-media-error-handling',
+                       '--disable-local-file-access', '--enable-local-file-access',
+                       '--exclude-from-outline', '--include-in-outline', '--disable-plugins',
+                       '--enable-plugins', '--print-media-type', '--no-print-media-type',
+                       '--resolve-relative-links', '--disable-smart-shrinking',
+                       '--enable-smart-shrinking', '--stop-slow-scripts',
+                       '--no-stop-slow-scripts', '--disable-toc-back-links',
+                       '--enable-toc-back-links', '--footer-line', '--no-footer-line',
+                       '--header-line', '--no-header-line', '--disable-dotted-lines',
+                       '--disable-toc-links', '--verbose']
+
 
 def _options_to_args(**options):
-    """Converts ``options`` into a list of command-line arguments."""
+    """
+    Converts ``options`` into a list of command-line arguments.
+    Skip arguments where no value is provided
+    For flag-type (No argument) variables, pass only the name and only then if the value is True
+    """
     flags = []
     for name in sorted(options):
         value = options[name]
-        if value is None:
+        formatted_flag = '--%s' % name if len(name) > 1 else '-%s' % name
+        formatted_flag = formatted_flag.replace('_', '-')
+        accepts_no_arguments = formatted_flag in NO_ARGUMENT_OPTIONS
+        if value is None or (value is False and accepts_no_arguments):
             continue
-        flags.append('--' + name.replace('_', '-'))
-        if value is not True:
-            flags.append(six.text_type(value))
+        flags.append(formatted_flag)
+        if accepts_no_arguments:
+            continue
+        flags.append(six.text_type(value))
     return flags
 
 
