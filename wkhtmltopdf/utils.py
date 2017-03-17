@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from copy import copy
 from itertools import chain
+import logging
 import os
 import re
 import sys
@@ -23,6 +24,8 @@ from django.template.context import Context, RequestContext
 from django.utils import six
 
 from .subprocess import check_output
+
+logger = logging.getLogger(__name__)
 
 NO_ARGUMENT_OPTIONS = ['--collate', '--no-collate', '-H', '--extended-help', '-g',
                        '--grayscale', '-h', '--help', '--htmldoc', '--license', '-l',
@@ -115,6 +118,17 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         options = copy(options)
     options.update(kwargs)
 
+    page_list = list(pages)
+
+    # handle Table of Contents
+    use_toc = options.pop('toc', False)
+    toc_xsl = options.pop('toc_xsl', '')
+    if use_toc:
+        if toc_xsl:
+            page_list.insert(0, 'toc --xsl-style-sheet %s' % toc_xsl)
+        else:
+            page_list.insert(0, 'toc')
+
     # Force --encoding utf8 unless the user has explicitly overridden this.
     options.setdefault('encoding', 'utf8')
 
@@ -127,9 +141,12 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     ck_args = list(chain(shlex.split(cmd),
                          _options_to_args(**options),
-                         list(pages),
+                         page_list,
                          [output]))
-    ck_kwargs = {'env': env}
+    ck_kwargs = {
+        'env': env,
+        'shell': True
+    }
     # Handling of fileno() attr. based on https://github.com/GrahamDumpleton/mod_wsgi/issues/85
     try:
         i = sys.stderr.fileno()
@@ -138,6 +155,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         # can't call fileno() on mod_wsgi stderr object
         pass
 
+    ck_args = ' '.join(ck_args)
     return check_output(ck_args, **ck_kwargs)
 
 def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None):
