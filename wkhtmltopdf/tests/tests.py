@@ -49,6 +49,15 @@ class TestUtils(TestCase):
                          ['--file-name', 'file-name',
                           '--heart', u'♥',
                           '--verbose'])
+        self.assertEqual(_options_to_args(heart=u'♥', quiet=True,
+                                          file_name='file-name'),
+                         ['--file-name', 'file-name',
+                          '--heart', u'♥',
+                          '--quiet'])
+        self.assertEqual(_options_to_args(heart=u'♥', quiet=False,
+                                          file_name='file-name'),
+                         ['--file-name', 'file-name',
+                          '--heart', u'♥'])
 
     def test_wkhtmltopdf(self):
         """Should run wkhtmltopdf to generate a PDF"""
