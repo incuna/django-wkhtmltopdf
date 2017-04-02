@@ -19,6 +19,7 @@ except ImportError:  # Python2
 
 import django
 from django.conf import settings
+from django.template import loader
 from django.template.context import Context, RequestContext
 from django.utils import six
 
@@ -300,7 +301,11 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
                 context = Context(context)
         content = template.render(context)
     else:
-        content = template.render(context, request)
+        # Handle error when ``request`` is None
+        try:
+            content = template.render(context, request)
+        except AttributeError:
+            content = loader.render_to_string(template, context)
 
     content = smart_text(content)
     content = make_absolute_paths(content)
