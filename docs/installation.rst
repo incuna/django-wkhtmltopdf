@@ -51,3 +51,20 @@ version, you can use the ``WKHTMLTOPDF_CMD`` setting:
 .. code-block:: python
 
     WKHTMLTOPDF_CMD = '/path/to/my/wkhtmltopdf'
+
+Display static files
+----------------------
+
+Set ``STATIC_ROOT`` in your ``settings.py``:
+
+.. code-block:: python
+
+    STATIC_ROOT = '/full/path/to/static/directory/'
+    
+Make sure your static files and directories are inside this directory.
+
+**Note:**
+In production static files are supposed to reside outside the project folder, in a public directory. The STATIC_ROOT-setting gives the path to this directory. However, django-wkhtmltopdf requires that STATIC_ROOT is also set on your local machine. 
+
+In development the static files reside in their respective apps folder or in a cross-app directory defined by the STATIC_DIRS-setting. Refer to the django documentation for how you can move static files to the STATIC_ROOT directory through a django script.
+
