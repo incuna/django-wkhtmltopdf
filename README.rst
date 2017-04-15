@@ -20,7 +20,7 @@ Converts HTML to PDF
 Provides Django views to wrap the HTML to PDF conversion of the `wkhtmltopdf <http://wkhtmltopdf.org>`_ binary.
 
 Requirements
-------------
+-------------
 
 Install the `wkhtmltopdf static binary <http://wkhtmltopdf.org/downloads.html>`_.
 
@@ -30,7 +30,7 @@ Python 2.6+ and 3.3+ are supported.
 
 
 Installation
-------------
+-------------
 
 Run ``pip install django-wkhtmltopdf``.
 
@@ -64,6 +64,6 @@ Documentation
 Documentation is available at http://django-wkhtmltopdf.readthedocs.org/en/latest/.
 
 License
--------
+-------------
 
 MIT licensed. See the bundled `LICENSE <https://github.com/incuna/django-wkhtmltopdf/blob/master/LICENSE>`_ file for more details.
