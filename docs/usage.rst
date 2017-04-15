@@ -68,6 +68,30 @@ Point a URL at :py:class:`PDFTemplateView`:
         # ...
     )
 
+Or use in a functional view:
+
+.. code-block:: python
+
+    from django.shortcuts import render_to_response
+    from wkhtmltopdf import render_to_pdf
+    
+    def pdf(request):
+        context.update({'objects': ModelA.objects.filter(p_id=100)})
+    
+        kwargs = {}
+        if request.GET and request.GET.get('as', '') == 'html':
+            render_to = render_to_response
+        else:
+            render_to = render_to_pdf
+            kwargs.update(dict(
+                filename='model-a.pdf',
+                margin_top=0,
+                margin_right=0,
+                margin_bottom=0,
+                margin_left=0))
+    
+        return render_to('pdf.html', context, **kwargs)
+
 
 Advanced Example
 ----------------
