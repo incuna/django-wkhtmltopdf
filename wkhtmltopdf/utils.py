@@ -299,12 +299,16 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
                 context = RequestContext(request, context)
             else:
                 context = Context(context)
-    # Handle error when ``request`` is None
-    try:
-        content = template.render(context)
-    except AttributeError:
-        content = loader.render_to_string(template, context)
-
+        # Handle error when ``request`` is None
+        try:
+            content = template.render(context)
+        except AttributeError:
+            content = loader.render_to_string(template, context)
+    else:
+        try:
+            content = template.render(context, request)
+        except AttributeError:
+            content = loader.render_to_string(template, context)
     content = smart_text(content)
     content = make_absolute_paths(content)
 
