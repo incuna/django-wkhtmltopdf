@@ -291,24 +291,21 @@ def make_absolute_paths(content):
 def render_to_temporary_file(template, context, request=None, mode='w+b',
                              bufsize=-1, suffix='.html', prefix='tmp',
                              dir=None, delete=True):
-    if django.VERSION < (1, 8):
-        # If using a version of Django prior to 1.8, ensure ``context`` is an
-        # instance of ``Context``
-        if not isinstance(context, Context):
-            if request:
-                context = RequestContext(request, context)
-            else:
-                context = Context(context)
-        # Handle error when ``request`` is None
-        try:
+    try:
+        if django.VERSION < (1, 8):
+            # If using a version of Django prior to 1.8, ensure ``context`` is an
+            # instance of ``Context``
+            if not isinstance(context, Context):
+                if request:
+                    context = RequestContext(request, context)
+                else:
+                    context = Context(context)
+            # Handle error when ``request`` is None
             content = template.render(context)
-        except AttributeError:
-            content = loader.render_to_string(template, context)
-    else:
-        try:
+        else:
             content = template.render(context, request)
-        except AttributeError:
-            content = loader.render_to_string(template, context)
+    except AttributeError:
+        content = loader.render_to_string(template, context)
     content = smart_text(content)
     content = make_absolute_paths(content)
 

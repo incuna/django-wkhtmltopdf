@@ -8,7 +8,7 @@ import sys
 from django.conf import settings
 from django.template import loader, RequestContext
 from django.test import TestCase
-from django.test import override_settings
+from django.test.utils import override_settings
 from django.test.client import RequestFactory
 from django.utils import six
 from django.utils.encoding import smart_str
@@ -419,7 +419,6 @@ class TestViews(TestCase):
             saved_content, filename = self._render_file(template=template, context={}, request=request)
             self.assertTrue('<h1></h1>' in saved_content)
 
-
         view = PDFTemplateView.as_view(filename=self.pdf_filename,
                                        show_content_in_browser=show_content,
                                        template_name=self.context_template,
@@ -431,7 +430,6 @@ class TestViews(TestCase):
         response.render()
         self.assertIn(b'<h1>True</h1>', response.content)
         with override_settings(DEBUG=False):
-            # As HTML
             request = RequestFactory().get('/?as=html')
             response = view(request)
             self.assertEqual(response.status_code, 200)
