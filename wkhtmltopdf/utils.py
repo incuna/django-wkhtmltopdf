@@ -107,6 +107,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     if output is None:
         # Standard output.
         output = '-'
+    has_cover = kwargs.pop('has_cover', False)
 
     # Default options:
     options = getattr(settings, 'WKHTMLTOPDF_CMD_OPTIONS', None)
@@ -126,6 +127,10 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     cmd = 'WKHTMLTOPDF_CMD'
     cmd = getattr(settings, cmd, os.environ.get(cmd, 'wkhtmltopdf'))
 
+    # Adding 'cover' option to add cover_file to the pdf to generate.
+    if has_cover:
+        pages.insert(0, 'cover')
+
     ck_args = list(chain(shlex.split(cmd),
                          _options_to_args(**options),
                          list(pages),
@@ -141,19 +146,24 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     return check_output(ck_args, **ck_kwargs)
 
-def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None):
+def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None, cover_filename=None):
     # Clobber header_html and footer_html only if filenames are
     # provided. These keys may be in self.cmd_options as hardcoded
     # static files.
     # The argument `filename` may be a string or a list. However, wkhtmltopdf
     # will coerce it into a list if a string is passed.
     cmd_options = cmd_options if cmd_options else {}
+    if cover_filename:
+        pages = [cover_filename, filename]
+        cmd_options['has_cover'] = True
+    else:
+        pages = [filename]
 
     if header_filename is not None:
         cmd_options['header_html'] = header_filename
     if footer_filename is not None:
         cmd_options['footer_html'] = footer_filename
-    return wkhtmltopdf(pages=filename, **cmd_options)
+    return wkhtmltopdf(pages=pages, **cmd_options)
 
 class RenderedFile(object):
     """
@@ -180,7 +190,8 @@ class RenderedFile(object):
         if self.temporary_file is not None:
             self.temporary_file.close()
 
-def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
+def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None,
+    cover_template=None):
     # For basic usage. Performs all the actions necessary to create a single
     # page PDF from a single template and context.
     cmd_options = cmd_options if cmd_options else {}
@@ -211,11 +222,19 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
             request=request
         )
         footer_filename = footer_file.filename
+    cover = None
+    if cover_template:
+        cover = RenderedFile(
+            template=cover_template,
+            context=context,
+            request=request
+        )
 
     return convert_to_pdf(filename=input_file.filename,
                           header_filename=header_filename,
                           footer_filename=footer_filename,
-                          cmd_options=cmd_options)
+                          cmd_options=cmd_options,
+                          cover_filename=cover.filename if cover else None)
 
 def content_disposition_filename(filename):
     """
