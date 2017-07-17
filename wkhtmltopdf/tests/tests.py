@@ -14,8 +14,8 @@ from django.utils.encoding import smart_str
 
 from wkhtmltopdf.subprocess import CalledProcessError
 from wkhtmltopdf.utils import (_options_to_args, make_absolute_paths,
-                               wkhtmltopdf, render_to_temporary_file,
-                               RenderedFile)
+                               wkhtmltopdf, render_pdf_from_template,
+                               render_to_temporary_file, RenderedFile)
 from wkhtmltopdf.views import PDFResponse, PDFTemplateView, PDFTemplateResponse
 
 
@@ -143,6 +143,18 @@ class TestUtils(TestCase):
             # Then check if file persists when debug=True.
             self.assertTrue(debug)
             self.assertTrue(os.path.isfile(filename))
+
+    def test_render_with_null_request(self):
+        """If request=None, the file should render properly."""
+        title = 'A test template.'
+        template = loader.get_template('sample.html')
+        pdf_content = render_pdf_from_template('sample.html',
+                                               header_template=None,
+                                               footer_template=None,
+                                               context={'title': title})
+
+        self.assertTrue(pdf_content.startswith(b'%PDF-'))
+        self.assertTrue(pdf_content.endswith(b'%%EOF\n'))
 
 
 class TestViews(TestCase):
