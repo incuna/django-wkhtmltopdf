@@ -48,7 +48,7 @@ before_install:
   - sudo apt-get install xvfb
   - sudo apt-get install wkhtmltopdf
   - WHICH_WK=`which wkhtmltopdf`
-  - export WKHTMLTOPDF_CMD='xvfb-run $WHICH_WK'
+  - export WKHTMLTOPDF_CMD="xvfb-run $WHICH_WK"
 install:
   - pip install $DJANGO
   - pip install -r test_requirements.txt
