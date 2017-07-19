@@ -42,15 +42,12 @@ matrix:
       env: DJANGO="Django>=1.7,<1.8"
 before_install:
   - PWD=`pwd`
-  - "echo '## Installing dependencies'"
-  - "sudo apt-get update"
-  - "sudo apt-get install -y openssl build-essential xorg libssl-dev xfonts-75dpi"
-  - "echo '## Downloading wkhtmltopdf'"
-  - "wget http://download.gna.org/wkhtmltopdf/0.12/0.12.2.1/wkhtmltox-0.12.2.1_linux-wheezy-amd64.deb"
-  - "echo '## Installing wkhtmltox'"
-  - "sudo dpkg -i wkhtmltox-0.12.2.1_linux-wheezy-amd64.deb"
+  - echo '## Installing wkhtmltopdf'
+  - sudo add-apt-repository ppa:pov/wkhtmltopdf -y
+  - sudo apt-get update -qq
+  - sudo apt-get install wkhtmltopdf
   - WHICH_WK=`which wkhtmltopdf`
-  - "export WKHTMLTOPDF_CMD=$WHICH_WK"
+  - export WKHTMLTOPDF_CMD=$WHICH_WK
 install:
   - pip install $DJANGO
   - pip install -r test_requirements.txt
