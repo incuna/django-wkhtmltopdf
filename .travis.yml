@@ -42,13 +42,13 @@ matrix:
       env: DJANGO="Django>=1.7,<1.8"
 before_install:
   - PWD=`pwd`
-  - echo '## Installing wkhtmltopdf'
-  - sudo add-apt-repository ppa:pov/wkhtmltopdf -y
+  - echo '## Installing wkhtmltopdf dependencies'
   - sudo apt-get update -qq
-  - sudo apt-get install xvfb
-  - sudo apt-get install wkhtmltopdf
-  - WHICH_WK=`which wkhtmltopdf`
-  - export WKHTMLTOPDF_CMD="xvfb-run -a $WHICH_WK"
+  - sudo apt-get install -y libxrender1 libfontconfig1 zlib1g libfreetype6 libx11-6 libxext6
+  - echo '## Installing wkhtmltopdf'
+  - wget https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.4/wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
+  - tar xf wkhtmltox-0.12.4_linux-generic-amd64.tar.xz
+  - export WKHTMLTOPDF_CMD="$PWD/wkhtmltox/bin/wkhtmltopdf"
 install:
   - pip install $DJANGO
   - pip install -r test_requirements.txt
