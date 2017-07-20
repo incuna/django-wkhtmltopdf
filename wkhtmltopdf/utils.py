@@ -19,6 +19,7 @@ except ImportError:  # Python2
 
 import django
 from django.conf import settings
+from django.contrib.staticfiles import finders
 from django.template import loader
 from django.template.context import Context, RequestContext
 from django.utils import six
@@ -141,6 +142,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     return check_output(ck_args, **ck_kwargs)
 
+
 def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None):
     # Clobber header_html and footer_html only if filenames are
     # provided. These keys may be in self.cmd_options as hardcoded
@@ -154,6 +156,7 @@ def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_opt
     if footer_filename is not None:
         cmd_options['footer_html'] = footer_filename
     return wkhtmltopdf(pages=filename, **cmd_options)
+
 
 class RenderedFile(object):
     """
@@ -179,6 +182,7 @@ class RenderedFile(object):
         # Always close the temporary_file on object destruction.
         if self.temporary_file is not None:
             self.temporary_file.close()
+
 
 def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
     # For basic usage. Performs all the actions necessary to create a single
@@ -216,6 +220,7 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
                           header_filename=header_filename,
                           footer_filename=footer_filename,
                           cmd_options=cmd_options)
+
 
 def content_disposition_filename(filename):
     """
@@ -260,33 +265,29 @@ def make_absolute_paths(content):
     """Convert all MEDIA files into a file://URL paths in order to
     correctly get it displayed in PDFs."""
     overrides = [
-        {
-            'root': settings.MEDIA_ROOT,
-            'url': settings.MEDIA_URL,
-        },
-        {
-            'root': settings.STATIC_ROOT,
-            'url': settings.STATIC_URL,
-        }
+        settings.MEDIA_URL,
+        settings.STATIC_URL,
     ]
+
     has_scheme = re.compile(r'^[^:/]+://')
 
     for x in overrides:
-        if not x['url'] or has_scheme.match(x['url']):
+        if has_scheme.match(x):
             continue
 
-        if not x['root'].endswith('/'):
-            x['root'] += '/'
-
         occur_pattern = '''["|']({0}.*?)["|']'''
-        occurences = re.findall(occur_pattern.format(x['url']), content)
+        occurences = re.findall(occur_pattern.format(x), content)
         occurences = list(set(occurences))  # Remove dups
+
         for occur in occurences:
-            content = content.replace(occur,
-                                      pathname2fileurl(x['root']) +
-                                      occur[len(x['url']):])
+            filename = occur[len(x):]
+            pathname = finders.find(filename, all=False)
+
+            if pathname:
+                content = content.replace(occur, pathname2fileurl(pathname))
 
     return content
+
 
 def render_to_temporary_file(template, context, request=None, mode='w+b',
                              bufsize=-1, suffix='.html', prefix='tmp',
