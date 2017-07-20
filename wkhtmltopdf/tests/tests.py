@@ -83,6 +83,16 @@ class TestUtils(TestCase):
         finally:
             temp_file.close()
 
+    def test_table_of_contents(self):
+        title = 'Chapter 1'
+        template = loader.get_template('sample.html')
+        temp_file = render_to_temporary_file(template, context={'title': title})
+        try:
+            pdf_output = wkhtmltopdf(pages=[temp_file.name])
+            self.assertTrue(pdf_output.find("Pages 2") > -1)
+        finally:
+            temp_file.close()
+
     def test_wkhtmltopdf_with_unicode_content(self):
         """A wkhtmltopdf call should render unicode content properly"""
         title = u'♥'

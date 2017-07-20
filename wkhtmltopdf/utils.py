@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from copy import copy
 from itertools import chain
+import logging
 import os
 import re
 import sys
@@ -24,6 +25,8 @@ from django.template.context import Context, RequestContext
 from django.utils import six
 
 from .subprocess import check_output
+
+logger = logging.getLogger(__name__)
 
 NO_ARGUMENT_OPTIONS = ['--collate', '--no-collate', '-H', '--extended-help', '-g',
                        '--grayscale', '-h', '--help', '--htmldoc', '--license', '-l',
@@ -107,6 +110,7 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     if output is None:
         # Standard output.
         output = '-'
+    has_cover = kwargs.pop('has_cover', False)
 
     # Default options:
     options = getattr(settings, 'WKHTMLTOPDF_CMD_OPTIONS', None)
@@ -115,6 +119,18 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     else:
         options = copy(options)
     options.update(kwargs)
+
+    page_list = list(pages)
+
+    # handle Table of Contents
+    use_toc = options.pop('toc', False)
+    toc_xsl = options.pop('toc_xsl', '')
+    if use_toc:
+        insert_at = 1 if has_cover else 0
+        if toc_xsl:
+            page_list.insert(insert_at, 'toc --xsl-style-sheet %s' % toc_xsl)
+        else:
+            page_list.insert(insert_at, 'toc')
 
     # Force --encoding utf8 unless the user has explicitly overridden this.
     options.setdefault('encoding', 'utf8')
@@ -128,9 +144,12 @@ def wkhtmltopdf(pages, output=None, **kwargs):
 
     ck_args = list(chain(shlex.split(cmd),
                          _options_to_args(**options),
-                         list(pages),
+                         page_list,
                          [output]))
-    ck_kwargs = {'env': env}
+    ck_kwargs = {
+        'env': env,
+        'shell': True
+    }
     # Handling of fileno() attr. based on https://github.com/GrahamDumpleton/mod_wsgi/issues/85
     try:
         i = sys.stderr.fileno()
@@ -139,9 +158,10 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         # can't call fileno() on mod_wsgi stderr object
         pass
 
+    ck_args = ' '.join(ck_args)
     return check_output(ck_args, **ck_kwargs)
 
-def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None):
+def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None, cover_filename=None):
     # Clobber header_html and footer_html only if filenames are
     # provided. These keys may be in self.cmd_options as hardcoded
     # static files.
@@ -149,11 +169,17 @@ def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_opt
     # will coerce it into a list if a string is passed.
     cmd_options = cmd_options if cmd_options else {}
 
+    if cover_filename:
+        pages = [cover_filename, filename]
+        cmd_options['has_cover'] = True
+    else:
+        pages = [filename]
+
     if header_filename is not None:
         cmd_options['header_html'] = header_filename
     if footer_filename is not None:
         cmd_options['footer_html'] = footer_filename
-    return wkhtmltopdf(pages=filename, **cmd_options)
+    return wkhtmltopdf(pages=pages, **cmd_options)
 
 class RenderedFile(object):
     """
@@ -180,7 +206,8 @@ class RenderedFile(object):
         if self.temporary_file is not None:
             self.temporary_file.close()
 
-def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
+def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None,
+                             cover_template=None):
     # For basic usage. Performs all the actions necessary to create a single
     # page PDF from a single template and context.
     cmd_options = cmd_options if cmd_options else {}
@@ -212,10 +239,19 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
         )
         footer_filename = footer_file.filename
 
+    cover = None
+    if cover_template:
+        cover = RenderedFile(
+            template=cover_template,
+            context=context,
+            request=request
+        )
+
     return convert_to_pdf(filename=input_file.filename,
                           header_filename=header_filename,
                           footer_filename=footer_filename,
-                          cmd_options=cmd_options)
+                          cmd_options=cmd_options,
+                          cover_filename=cover.filename if cover else None)
 
 def content_disposition_filename(filename):
     """
