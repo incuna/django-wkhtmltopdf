@@ -6,7 +6,7 @@ import os
 import sys
 
 from django.conf import settings
-from django.template import loader, RequestContext
+from django.template import loader
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.utils import six
@@ -135,8 +135,7 @@ class TestUtils(TestCase):
         with self.settings(WKHTMLTOPDF_DEBUG=True):
             debug = getattr(settings, 'WKHTMLTOPDF_DEBUG', settings.DEBUG)
 
-            saved_content, filename = self._render_file(template=template,
-                                                    context={'title': title})
+            saved_content, filename = self._render_file(template=template, context={'title': title})
             # First verify temp file was rendered correctly.
             self.assertTrue(title in saved_content)
 
@@ -193,7 +192,7 @@ class TestViews(TestCase):
                          'attachment; filename="4\'5.pdf"')
         response = PDFResponse(content=content, filename=u"♥.pdf")
         try:
-            import unidecode
+            import unidecode  # noqa
         except ImportError:
             filename = '?.pdf'
         else:
@@ -202,22 +201,15 @@ class TestViews(TestCase):
                          'attachment; filename="{0}"'.format(filename))
 
         # Content as a direct output
-        response = PDFResponse(content=content, filename="nospace.pdf",
-            show_content_in_browser=True)
-        self.assertEqual(response['Content-Disposition'],
-                         'inline; filename="nospace.pdf"')
-        response = PDFResponse(content=content, filename="one space.pdf",
-            show_content_in_browser=True)
-        self.assertEqual(response['Content-Disposition'],
-                         'inline; filename="one space.pdf"')
-        response = PDFResponse(content=content, filename="4'5\".pdf",
-            show_content_in_browser=True)
-        self.assertEqual(response['Content-Disposition'],
-                         'inline; filename="4\'5.pdf"')
-        response = PDFResponse(content=content, filename=u"♥.pdf",
-            show_content_in_browser=True)
+        response = PDFResponse(content=content, filename="nospace.pdf", show_content_in_browser=True)
+        self.assertEqual(response['Content-Disposition'], 'inline; filename="nospace.pdf"')
+        response = PDFResponse(content=content, filename="one space.pdf", show_content_in_browser=True)
+        self.assertEqual(response['Content-Disposition'], 'inline; filename="one space.pdf"')
+        response = PDFResponse(content=content, filename="4'5\".pdf", show_content_in_browser=True)
+        self.assertEqual(response['Content-Disposition'], 'inline; filename="4\'5.pdf"')
+        response = PDFResponse(content=content, filename=u"♥.pdf", show_content_in_browser=True)
         try:
-            import unidecode
+            import unidecode  # noqa
         except ImportError:
             filename = '?.pdf'
         else:

@@ -133,13 +133,14 @@ def wkhtmltopdf(pages, output=None, **kwargs):
     ck_kwargs = {'env': env}
     # Handling of fileno() attr. based on https://github.com/GrahamDumpleton/mod_wsgi/issues/85
     try:
-        i = sys.stderr.fileno()
+        sys.stderr.fileno()
         ck_kwargs['stderr'] = sys.stderr
     except (AttributeError, IOError):
         # can't call fileno() on mod_wsgi stderr object
         pass
 
     return check_output(ck_args, **ck_kwargs)
+
 
 def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None):
     # Clobber header_html and footer_html only if filenames are
@@ -154,6 +155,7 @@ def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_opt
     if footer_filename is not None:
         cmd_options['footer_html'] = footer_filename
     return wkhtmltopdf(pages=filename, **cmd_options)
+
 
 class RenderedFile(object):
     """
@@ -179,6 +181,7 @@ class RenderedFile(object):
         # Always close the temporary_file on object destruction.
         if self.temporary_file is not None:
             self.temporary_file.close()
+
 
 def render_pdf_from_template(input_template, header_template, footer_template, context, request=None, cmd_options=None):
     # For basic usage. Performs all the actions necessary to create a single
@@ -216,6 +219,7 @@ def render_pdf_from_template(input_template, header_template, footer_template, c
                           header_filename=header_filename,
                           footer_filename=footer_filename,
                           cmd_options=cmd_options)
+
 
 def content_disposition_filename(filename):
     """
@@ -287,6 +291,7 @@ def make_absolute_paths(content):
                                       occur[len(x['url']):])
 
     return content
+
 
 def render_to_temporary_file(template, context, request=None, mode='w+b',
                              bufsize=-1, suffix='.html', prefix='tmp',

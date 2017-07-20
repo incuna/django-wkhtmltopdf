@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from subprocess import *
+from subprocess import *  # noqa
 
 
 # Provide Python 2.7's check_output() function.
