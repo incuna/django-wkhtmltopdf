@@ -8,6 +8,7 @@ import sys
 from django.conf import settings
 from django.template import loader, RequestContext
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.test.client import RequestFactory
 from django.utils import six
 from django.utils.encoding import smart_str
@@ -159,6 +160,7 @@ class TestUtils(TestCase):
 
 class TestViews(TestCase):
     template = 'sample.html'
+    context_template = 'context.html'
     footer_template = 'footer.html'
     pdf_filename = 'output.pdf'
     attached_fileheader = 'attachment; filename="{0}"'
@@ -379,3 +381,60 @@ class TestViews(TestCase):
         view.cmd_options.update(cmd_options)
         self.assertEqual(view.cmd_options, cmd_options)
         self.assertEqual(PDFTemplateView.cmd_options, {})
+
+    def _render_file(self, template, context, request=None):
+        """Helper method for testing rendered file deleted/persists tests."""
+        render = RenderedFile(template=template, context=context, request=request)
+        render.temporary_file.seek(0)
+        saved_content = smart_str(render.temporary_file.read())
+
+        return (saved_content, render.filename)
+
+    @override_settings(
+        DEBUG=True,
+        INTERNAL_IPS=['127.0.0.1'],
+        TEMPLATES=[
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'APP_DIRS': True,
+                'OPTIONS': {
+                    'context_processors': [
+                        'django.template.context_processors.debug',
+                    ],
+                },
+            },
+        ]
+    )
+    def test_get_context_processor_variables_debug(self, show_content=False):
+        request = RequestFactory().get('/')
+        template = loader.get_template(self.context_template)
+
+        saved_content, filename = self._render_file(template=template, context={}, request=request)
+        self.assertTrue('<h1>True</h1>' in saved_content)
+
+        with override_settings(DEBUG=False):
+            request = RequestFactory().get('/')
+            template = loader.get_template(self.context_template)
+
+            saved_content, filename = self._render_file(template=template, context={}, request=request)
+            self.assertTrue('<h1></h1>' in saved_content)
+
+        view = PDFTemplateView.as_view(filename=self.pdf_filename,
+                                       show_content_in_browser=show_content,
+                                       template_name=self.context_template,
+                                       footer_template=self.footer_template)
+        # As HTML
+        request = RequestFactory().get('/?as=html')
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        response.render()
+        self.assertIn(b'<h1>True</h1>', response.content)
+        with override_settings(DEBUG=False):
+            request = RequestFactory().get('/?as=html')
+            response = view(request)
+            self.assertEqual(response.status_code, 200)
+            response.render()
+            self.assertIn(b'<h1></h1>', response.content)
+
+    def test_get_context_processor_variables_debug_show_content(self):
+        self.test_get_context_processor_variables_debug(show_content=True)
