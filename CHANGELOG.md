@@ -1,6 +1,15 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+3.2.0
+===================
+
+* Adding support for cover page
+* fix templates without context_processor
+* Update installation docs
+* Allow rendering PDFs when request is None
+* Fix argument passing
+
 3.1.0
 -----
 
