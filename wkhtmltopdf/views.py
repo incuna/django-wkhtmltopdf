@@ -43,6 +43,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
                  filename=None, show_content_in_browser=None,
                  header_template=None, footer_template=None,
                  cmd_options=None, *args, **kwargs):
+        cover_template = kwargs.pop('cover_template', None)
 
         super(PDFTemplateResponse, self).__init__(request=request,
                                                   template=template,
@@ -54,7 +55,7 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
 
         self.header_template = header_template
         self.footer_template = footer_template
-
+        self.cover_template = cover_template
         if cmd_options is None:
             cmd_options = {}
         self.cmd_options = cmd_options
@@ -75,7 +76,9 @@ class PDFTemplateResponse(TemplateResponse, PDFResponse):
             self.resolve_template(self.footer_template),
             context=self.resolve_context(self.context_data),
             request=self._request,
-            cmd_options=cmd_options
+            cmd_options=cmd_options,
+            cover_template=self.resolve_template(self.cover_template)
+
         )
 
 class PDFTemplateView(TemplateView):
@@ -91,6 +94,7 @@ class PDFTemplateView(TemplateView):
     template_name = None
     header_template = None
     footer_template = None
+    cover_template = None
 
     # TemplateResponse classes for PDF and HTML
     response_class = PDFTemplateResponse
@@ -147,6 +151,7 @@ class PDFTemplateView(TemplateView):
                 header_template=self.header_template,
                 footer_template=self.footer_template,
                 cmd_options=cmd_options,
+                cover_template=self.cover_template,
                 **response_kwargs
             )
         else:
