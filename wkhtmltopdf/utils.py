@@ -311,6 +311,10 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
                              bufsize=-1, suffix='.html', prefix='tmp',
                              dir=None, delete=True):
     try:
+        render = template.render
+    except AttributeError:
+        content = loader.render_to_string(template, context)
+    else:
         if django.VERSION < (1, 8):
             # If using a version of Django prior to 1.8, ensure ``context`` is an
             # instance of ``Context``
@@ -320,11 +324,9 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
                 else:
                     context = Context(context)
             # Handle error when ``request`` is None
-            content = template.render(context)
+            content = render(context)
         else:
-            content = template.render(context, request)
-    except AttributeError:
-        content = loader.render_to_string(template, context)
+            content = render(context, request)
     content = smart_text(content)
     content = make_absolute_paths(content)
 

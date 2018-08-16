@@ -1,8 +1,12 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+UPCOMING
+--------
+* Fix AttributeError exception handling to only catch specific AttributeError.
+
 3.2.0
-===================
+-----
 
 * Adding support for cover page
 * fix templates without context_processor
