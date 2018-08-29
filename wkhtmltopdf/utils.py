@@ -284,7 +284,7 @@ def make_absolute_paths(content):
             'url': settings.MEDIA_URL,
         },
         {
-            'root': settings.STATIC_ROOT,
+            'root': settings.STATIC_ROOT if not settings.DEBUG else settings.STATICFILES_DIRS[0],
             'url': settings.STATIC_URL,
         }
     ]
