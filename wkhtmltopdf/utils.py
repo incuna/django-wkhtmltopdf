@@ -297,13 +297,14 @@ def make_absolute_paths(content):
         if not x['root'].endswith('/'):
             x['root'] += '/'
 
-        occur_pattern = '''["|']({0}.*?)["|']'''
+        occur_pattern = '''(["|']{0}.*?["|'])'''
         occurences = re.findall(occur_pattern.format(x['url']), content)
         occurences = list(set(occurences))  # Remove dups
         for occur in occurences:
-            content = content.replace(occur,
+            content = content.replace(occur, '"%s"' % (
                                       pathname2fileurl(x['root']) +
-                                      occur[len(x['url']):])
+                                      occur[1 + len(x['url']): -1]))
+
 
     return content
 
