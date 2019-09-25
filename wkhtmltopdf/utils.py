@@ -21,7 +21,7 @@ import django
 from django.conf import settings
 from django.template import loader
 from django.template.context import Context, RequestContext
-from django.utils import six
+import six
 
 from .subprocess import check_output
 
