@@ -157,6 +157,22 @@ class TestUtils(TestCase):
         self.assertTrue(pdf_content.startswith(b'%PDF-'))
         self.assertTrue(pdf_content.endswith(b'%%EOF\n'))
 
+    @override_settings(STATIC_URL='/static/', STATIC_ROOT='path/to/some/dir')
+    def test_make_absolute_paths(self):
+        """
+        Regression test for https://github.com/incuna/django-wkhtmltopdf/issues/22
+        """
+        content = """
+            <img src="/static/foo.png"/>
+            <img src="/static/bar/static/foo.png"/>
+        """
+        expected = """
+            <img src="file:///path/to/some/dir/foo.png"/>
+            <img src="file:///path/to/some/dir/bar/static/foo.png"/>
+        """
+
+        self.assertEqual(make_absolute_paths(content), expected)
+
 
 class TestViews(TestCase):
     template = 'sample.html'
