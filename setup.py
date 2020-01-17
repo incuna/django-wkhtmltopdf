@@ -30,4 +30,7 @@ setup(
         'Framework :: Django',
     ],
     keywords='django wkhtmltopdf pdf',
+    install_requires=[
+        'six',
+    ],
 )
