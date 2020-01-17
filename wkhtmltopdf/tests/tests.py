@@ -167,8 +167,8 @@ class TestUtils(TestCase):
             <img src="/static/bar/static/foo.png"/>
         """
         expected = """
-            <img src="file://path/to/some/dir/foo.png"/>
-            <img src="file://path/to/some/dir/bar/static/foo.png"/>
+            <img src="file:///path/to/some/dir/foo.png"/>
+            <img src="file:///path/to/some/dir/bar/static/foo.png"/>
         """
 
         self.assertEqual(make_absolute_paths(content), expected)
