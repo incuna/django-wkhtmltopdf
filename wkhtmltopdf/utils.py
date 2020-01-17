@@ -37,7 +37,6 @@ NO_ARGUMENT_OPTIONS = ['--collate', '--no-collate', '-H', '--extended-help', '-g
                        '--disable-forms', '--enable-forms', '--images', '--no-images',
                        '--disable-internal-links', '--enable-internal-links', '-n',
                        '--disable-javascript', '--enable-javascript', '--keep-relative-links',
-                       '--load-error-handling', '--load-media-error-handling',
                        '--disable-local-file-access', '--enable-local-file-access',
                        '--exclude-from-outline', '--include-in-outline', '--disable-plugins',
                        '--enable-plugins', '--print-media-type', '--no-print-media-type',
