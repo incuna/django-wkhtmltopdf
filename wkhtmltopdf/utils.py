@@ -293,8 +293,8 @@ def make_absolute_paths(content):
         if not x['url'] or has_scheme.match(x['url']):
             continue
 
-        if not x['root'].endswith('/'):
-            x['root'] += '/'
+        if not str(x['root']).endswith('/'):
+            x['root'] = f"{x['root']}/"
 
         occur_pattern = '''(["|']{0}.*?["|'])'''
         occurences = re.findall(occur_pattern.format(x['url']), content)
