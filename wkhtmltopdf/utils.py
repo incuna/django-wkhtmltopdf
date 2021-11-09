@@ -17,6 +17,8 @@ except ImportError:  # Python2
     from urllib import pathname2url
     from urlparse import urljoin
 
+from subprocess import CalledProcessError, TimeoutExpired, CompletedProcess, Popen
+
 import django
 from django.conf import settings
 from django.template import loader
@@ -143,7 +145,23 @@ def wkhtmltopdf(pages, output=None, **kwargs):
         # can't call fileno() on mod_wsgi stderr object
         pass
 
-    return check_output(ck_args, **ck_kwargs)
+    try:
+        return check_output(ck_args, **ck_kwargs)
+    except CalledProcessError as e:
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                # POSIX _communicate already populated the output so
+                # far into the TimeoutExpired exception.
+                process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+        return CompletedProcess(process.args, 0, stdout, stderr).stdout
 
 def convert_to_pdf(filename, header_filename=None, footer_filename=None, cmd_options=None, cover_filename=None):
     # Clobber header_html and footer_html only if filenames are
