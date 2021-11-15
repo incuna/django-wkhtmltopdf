@@ -314,20 +314,17 @@ def render_to_temporary_file(template, context, request=None, mode='w+b',
     try:
         render = template.render
     except AttributeError:
-        content = loader.render_to_string(template, context)
+        content = loader.render_to_string(template, context, request=request)
     else:
-        if django.VERSION < (1, 8):
-            # If using a version of Django prior to 1.8, ensure ``context`` is an
-            # instance of ``Context``
-            if not isinstance(context, Context):
-                if request:
-                    context = RequestContext(request, context)
-                else:
-                    context = Context(context)
-            # Handle error when ``request`` is None
-            content = render(context)
-        else:
-            content = render(context, request)
+        # Ensure ``context`` is an instance of ``Context``
+        if not isinstance(context, Context):
+            if request:
+                context = RequestContext(request, context)
+            else:
+                context = Context(context)
+
+        content = render(context)
+
     content = smart_text(content)
     content = make_absolute_paths(content)
 
