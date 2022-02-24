@@ -6,7 +6,8 @@ help:
 	@echo " make test    | Run the tests."
 
 release:
-	python setup.py register sdist bdist_wheel upload
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
 
 test:
 	python ./wkhtmltopdf/tests/run.py
