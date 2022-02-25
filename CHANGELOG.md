@@ -1,6 +1,12 @@
 Changelog for django-wkhtmltopdf
 ================================
 
+3.4.0
+-------
+* Fix for Django 4.0
+* Remove travis CI
+* Add GitHub actions CI with for Python 3.7, 3.8 3.9 and Django 2.2, 3.2 and 4.0
+
 3.3.0
 --------
 
